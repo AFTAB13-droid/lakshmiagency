@@ -4,6 +4,16 @@ import connectToDatabase from "@/lib/db";
 import { User, IUser, UserRole } from "@/models/User";
 import bcrypt from "bcryptjs";
 
+const getBaseUrl = () => {
+  if (process.env.NEXTAUTH_URL && !process.env.NEXTAUTH_URL.includes("localhost")) {
+    return process.env.NEXTAUTH_URL;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  return "https://www.lakshmiagency.net";
+};
+
 export const authOptions: NextAuthOptions = {
   session: {
     strategy: "jwt",
@@ -49,15 +59,21 @@ export const authOptions: NextAuthOptions = {
   ],
   callbacks: {
     async redirect({ url, baseUrl }) {
-      // If relative URL, return it directly so the client resolves on current origin
-      if (url.startsWith("/")) return url;
-      // If same origin, allow it
+      const canonicalBase = getBaseUrl();
+      // Relative paths must be resolved to a valid absolute URL so new URL(data.url) never throws in NextAuth client
+      if (url.startsWith("/")) return `${canonicalBase}${url}`;
       try {
-        if (new URL(url).origin === baseUrl) return url;
-      } catch {
-        return "/login";
-      }
-      return "/login";
+        const u = new URL(url);
+        if (
+          u.origin === canonicalBase ||
+          u.origin.includes("lakshmiagency.net") ||
+          u.origin.includes("vercel.app") ||
+          u.origin === baseUrl
+        ) {
+          return url;
+        }
+      } catch {}
+      return `${canonicalBase}/login`;
     },
     async jwt({ token, user }) {
       if (user) {

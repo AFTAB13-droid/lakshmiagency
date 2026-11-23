@@ -42,7 +42,11 @@ export default function LoginPage() {
 
       if (res?.error) {
         triggerShake();
-        toast.error(res.error || "Authentication failed");
+        const msg =
+          res.error === "CredentialsSignin"
+            ? "Invalid email or password"
+            : res.error || "Authentication failed";
+        toast.error(msg);
         setLoading(false);
       } else {
         toast.success("Welcome back to Lakshmi Agency!");
@@ -55,9 +59,10 @@ export default function LoginPage() {
 
         window.location.href = target;
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Login catch error:", err);
       triggerShake();
-      toast.error("An unexpected error occurred");
+      toast.error(err?.message || "An unexpected error occurred");
       setLoading(false);
     }
   };
