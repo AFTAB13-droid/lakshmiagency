@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lakshmi Agency — Master Operational Guide & Complete Portal Manual</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@700;900&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --plum-950: #2d051f;
+      --plum-900: #520d38;
+      --plum-800: #70134d;
+      --plum-100: #f7e6f0;
+      --plum-50: #fdf5f9;
+      --lotus-600: #e83a89;
+      --lotus-500: #f45b9f;
+      --gold-600: #b8911e;
+      --gold-500: #d4af37;
+      --gold-100: #fbf5df;
+      --gold-50: #fefdf8;
+      --emerald-700: #047857;
+      --emerald-600: #059669;
+      --emerald-50: #ecfdf5;
+      --gray-900: #0f172a;
+      --gray-700: #334155;
+      --gray-500: #64748b;
+      --gray-200: #e2e8f0;
+      --gray-100: #f1f5f9;
+      --gray-50: #f8fafc;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      color: var(--gray-900);
+      background-color: #f8fafc;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* Print Controls Bar */
+    .print-bar {
+      position: sticky;
+      top: 0;
+      z-index: 1000;
+      background: linear-gradient(135deg, var(--plum-950), var(--plum-900));
+      color: white;
+      padding: 14px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: 0 4px 20px rgba(82, 13, 56, 0.25);
+    }
+
+    .print-btn {
+      background: linear-gradient(135deg, var(--gold-500), #e6c86e);
+      color: var(--plum-950);
+      border: none;
+      font-weight: 800;
+      font-size: 13px;
+      padding: 10px 22px;
+      border-radius: 9999px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(212, 175, 55, 0.35);
+      transition: all 0.2s ease;
+    }
+    .print-btn:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.5);
+    }
+
+    .container {
+      max-width: 900px;
+      margin: 32px auto;
+      background: white;
+      padding: 60px 70px;
+      border-radius: 28px;
+      box-shadow: 0 10px 40px rgba(15, 23, 42, 0.08);
+      border: 1px solid var(--plum-100);
+    }
+
+    /* Typography */
+    h1, h2, h3, h4 {
+      color: var(--plum-950);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .font-serif {
+      font-family: 'Cinzel', serif;
+    }
+
+    .mono {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.9em;
+    }
+
+    /* Cover Page */
+    .cover {
+      text-align: center;
+      padding: 60px 20px 80px;
+      border-bottom: 2px solid var(--plum-100);
+      margin-bottom: 50px;
+      position: relative;
+    }
+
+    .cover-emblem {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: radial-gradient(circle, var(--gold-500) 0%, var(--plum-900) 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      box-shadow: 0 12px 30px rgba(82, 13, 56, 0.3);
+      border: 3px solid var(--gold-500);
+    }
+
+    .cover-badge {
+      display: inline-block;
+      padding: 6px 18px;
+      background: var(--plum-50);
+      color: var(--plum-900);
+      border: 1px solid var(--plum-100);
+      border-radius: 9999px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      margin-bottom: 16px;
+    }
+
+    .cover h1 {
+      font-size: 38px;
+      line-height: 1.2;
+      color: var(--plum-950);
+      margin-bottom: 12px;
+    }
+
+    .cover-tagline {
+      font-style: italic;
+      color: var(--lotus-600);
+      font-size: 17px;
+      font-weight: 600;
+      margin-bottom: 24px;
+    }
+
+    .cover-meta {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-top: 30px;
+      font-size: 12px;
+      color: var(--gray-500);
+      font-weight: 600;
+      flex-wrap: wrap;
+    }
+    .cover-meta span {
+      background: var(--gray-50);
+      padding: 6px 14px;
+      border-radius: 12px;
+      border: 1px solid var(--gray-200);
+    }
+
+    /* Section Styles */
+    section {
+      margin-bottom: 50px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 24px;
+      padding-bottom: 12px;
+      border-bottom: 2px solid var(--plum-100);
+    }
+
+    .section-num {
+      width: 34px;
+      height: 34px;
+      border-radius: 12px;
+      background: linear-gradient(135deg, var(--plum-900), var(--lotus-600));
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      font-size: 14px;
+      shrink: 0;
+    }
+
+    .section-title {
+      font-size: 22px;
+      color: var(--plum-950);
+    }
+
+    /* Cards & Callouts */
+    .card {
+      background: white;
+      border: 1px solid var(--plum-100);
+      border-radius: 20px;
+      padding: 24px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.02);
+      transition: all 0.2s ease;
+    }
+
+    .card-luxury {
+      background: linear-gradient(to bottom right, var(--plum-50), white);
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      position: relative;
+    }
+
+    .card-title {
+      font-size: 17px;
+      font-weight: 800;
+      color: var(--plum-950);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .badge {
+      display: inline-block;
+      padding: 3px 10px;
+      border-radius: 8px;
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .badge-plum { background: var(--plum-100); color: var(--plum-900); }
+    .badge-emerald { background: var(--emerald-50); color: var(--emerald-700); border: 1px solid rgba(5, 150, 105, 0.2); }
+    .badge-gold { background: var(--gold-100); color: var(--gold-600); border: 1px solid rgba(184, 145, 30, 0.2); }
+    .badge-lotus { background: #fdf2f8; color: var(--lotus-600); border: 1px solid rgba(232, 58, 137, 0.2); }
+
+    /* Workflow Step Boxes */
+    .step-box {
+      display: flex;
+      gap: 16px;
+      padding: 16px 20px;
+      border-radius: 16px;
+      background: var(--gray-50);
+      border: 1px solid var(--gray-200);
+      margin-bottom: 12px;
+    }
+    .step-box.active-step {
+      background: var(--plum-50);
+      border-color: var(--plum-100);
+    }
+    .step-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 10px;
+      background: var(--plum-900);
+      color: var(--gold-500);
+      font-weight: 800;
+      font-size: 13px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      shrink: 0;
+    }
+    .step-content h4 {
+      font-size: 14px;
+      font-weight: 800;
+      color: var(--plum-950);
+      margin-bottom: 4px;
+    }
+    .step-content p {
+      font-size: 12.5px;
+      color: var(--gray-700);
+      line-height: 1.5;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 16px 0 24px;
+      font-size: 13px;
+    }
+    th {
+      background: var(--plum-900);
+      color: white;
+      text-align: left;
+      padding: 12px 16px;
+      font-weight: 700;
+      font-size: 11.5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    th:first-child { border-radius: 12px 0 0 0; }
+    th:last-child { border-radius: 0 12px 0 0; }
+    td {
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--plum-100);
+      color: var(--gray-700);
+    }
+    tr:nth-child(even) td {
+      background: var(--plum-50);
+    }
+
+    /* Code & URLs */
+    code {
+      background: var(--plum-50);
+      color: var(--plum-900);
+      padding: 2px 6px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      border: 1px solid var(--plum-100);
+    }
+
+    .url-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      background: var(--gray-100);
+      border-radius: 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11.5px;
+      font-weight: 700;
+      color: var(--plum-950);
+      border: 1px solid var(--gray-200);
+    }
+
+    /* Policy Rules Box */
+    .rule-box {
+      border-left: 4px solid var(--gold-500);
+      background: var(--gold-50);
+      padding: 14px 18px;
+      border-radius: 0 14px 14px 0;
+      margin-bottom: 12px;
+      font-size: 13px;
+    }
+    .rule-box strong {
+      color: var(--plum-950);
+    }
+
+    /* Footer */
+    .doc-footer {
+      text-align: center;
+      padding-top: 40px;
+      border-top: 1px solid var(--plum-100);
+      margin-top: 60px;
+      font-size: 12px;
+      color: var(--gray-500);
+    }
+
+    /* Print Specific Formatting */
+    @media print {
+      body {
+        background: white;
+      }
+      .print-bar {
+        display: none !important;
+      }
+      .container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+      }
+      .page-break {
+        page-break-before: always;
+        break-before: page;
+      }
+      .avoid-break {
+        page-break-inside: avoid;
+        break-inside: avoid;
+      }
+      a {
+        text-decoration: none;
+        color: inherit;
+      }
+      @page {
+        size: A4;
+        margin: 1.8cm 1.5cm;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Top Sticky Print Bar (Hidden on print) -->
+  <div class="print-bar no-print">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <span style="font-size: 20px;">🪷</span>
+      <div>
+        <div style="font-weight: 800; font-size: 14px; letter-spacing: -0.01em;">Lakshmi Agency — Official User & Operational Manual</div>
+        <div style="font-size: 11px; opacity: 0.8;">Production Ready • Printable Version</div>
+      </div>
+    </div>
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <button class="print-btn" onclick="window.print()">
+        <span>🖨️</span> Save as PDF / Print Document
+      </button>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- ========================================================================= -->
+    <!-- COVER PAGE -->
+    <!-- ========================================================================= -->
+    <div class="cover">
+      <div class="cover-emblem">🪷</div>
+      <div class="cover-badge">Official System Documentation • 2026 Edition</div>
+      <h1 class="font-serif">LAKSHMI AGENCY</h1>
+      <div class="cover-tagline">“Your Needs... Our Priority...”</div>
+      <p style="font-size: 14px; color: var(--gray-700); max-width: 620px; margin: 0 auto; line-height: 1.7;">
+        The Master Operational Manual, System Architecture, and Page-by-Page Workflow Guide for Buyers, Premium Mediators, and Administrators.
+      </p>
+
+      <div class="cover-meta">
+        <span><strong>Live Production Portal:</strong> https://www.lakshmiagency.net</span>
+        <span><strong>Version:</strong> v2.4 Enterprise</span>
+        <span><strong>Platform Architecture:</strong> Next.js 14 • MongoDB Atlas • Google Webhooks</span>
+      </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 1: EXECUTIVE OVERVIEW & PLATFORM MODEL -->
+    <!-- ========================================================================= -->
+    <section class="avoid-break">
+      <div class="section-header">
+        <div class="section-num">1</div>
+        <h2 class="section-title">Executive Summary & Platform Purpose</h2>
+      </div>
+
+      <p style="font-size: 13.5px; color: var(--gray-700); margin-bottom: 16px;">
+        <strong>Lakshmi Agency</strong> is a premier luxury e-commerce review, rebate, and deal mediation web platform. It establishes a trusted bridge between e-commerce brands on platforms like <strong>Amazon</strong>, <strong>Flipkart</strong>, <strong>Myntra</strong>, <strong>Meesho</strong>, and <strong>Ajio</strong>, verified buyers, and experienced campaign mediators.
+      </p>
+
+      <div class="card card-luxury">
+        <div class="card-title">👑 The 3 Core Platform Roles</div>
+        <table>
+          <thead>
+            <tr>
+              <th>Role Identifier</th>
+              <th>Target User Group</th>
+              <th>Primary Portal Route</th>
+              <th>Key Core Responsibilities</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>BUYER (USER)</strong></td>
+              <td>Verified Customers</td>
+              <td><code>/buyer</code> & <code>/buyer/deals</code></td>
+              <td>Explore active deals, purchase on marketplace, submit Google Order Form, submit Google Refund Form after review.</td>
+            </tr>
+            <tr>
+              <td><strong>MEDIATOR (PREMIUM)</strong></td>
+              <td>Deal Promoters / Agents</td>
+              <td><code>/mediator</code> & <code>/mediator/deals</code></td>
+              <td>Pitch deals via 1-click WhatsApp generator containing their <code>#LAX...</code> mediator code, track client claim orders.</td>
+            </tr>
+            <tr>
+              <td><strong>ADMIN (MASTER)</strong></td>
+              <td>Agency Management Team</td>
+              <td><code>/admin</code></td>
+              <td>Create deals, manage inventory quotas, review dual Google Form submissions, approve/reject orders, log bank UTR payouts.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 2: THE COMPLETE 9-STEP OPERATIONAL WORKFLOW -->
+    <!-- ========================================================================= -->
+    <section class="page-break">
+      <div class="section-header">
+        <div class="section-num">2</div>
+        <h2 class="section-title">The Complete 9-Step Agency Operational Workflow</h2>
+      </div>
+
+      <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 20px;">
+        Lakshmi Agency operates on a disciplined, automated, and fraud-resistant 9-step campaign lifecycle. Every deal follows this exact lifecycle:
+      </p>
+
+      <div class="step-box active-step avoid-break">
+        <div class="step-icon">1</div>
+        <div class="step-content">
+          <h4>Admin Deal Creation & Slot Allocation</h4>
+          <p>The Master Admin creates a deal in <strong>Deals Studio</strong> (<code>/admin/deals</code>). Specific quotas are assigned for <strong>Rating Slots</strong> vs. <strong>Review Slots</strong>, pricing model (Full Refund, Less Deduction, or Commission Bonus), and marketplace link.</p>
+        </div>
+      </div>
+
+      <div class="step-box avoid-break">
+        <div class="step-icon">2</div>
+        <div class="step-content">
+          <h4>Mediator Campaign Sharing</h4>
+          <p>Mediators access their <strong>Live Deals Desk</strong> (<code>/mediator/deals</code>) and use the <strong>1-Click WhatsApp Pitch Generator</strong>. The system automatically injects their unique Mediator Code (e.g. <code>#LAX096</code>) and pre-fills the Google Order Form URL.</p>
+        </div>
+      </div>
+
+      <div class="step-box avoid-break">
+        <div class="step-icon">3</div>
+        <div class="step-content">
+          <h4>Buyer Purchase on Marketplace</h4>
+          <p>The Buyer views the deal on the portal (<code>/buyer/deals</code>) and clicks the branded <strong>"Buy on Amazon →"</strong> or <strong>"Buy on Flipkart →"</strong> button. The purchase is placed natively on the marketplace at standard consumer price.</p>
+        </div>
+      </div>
+
+      <div class="step-box active-step avoid-break">
+        <div class="step-icon">4</div>
+        <div class="step-content">
+          <h4>Google Order Form Submission (Step 2 in Portal)</h4>
+          <p>Immediately after purchasing, the buyer completes the <strong>Google Order Form</strong> with the Marketplace Order ID, product details, screenshot, and Mediator Code. The webhook engine instantly syncs this to Lakshmi Agency and decrements the remaining deal slot.</p>
+        </div>
+      </div>
+
+      <div class="step-box avoid-break">
+        <div class="step-icon">5</div>
+        <div class="step-content">
+          <h4>Holding Period (4–5 Days Delivery Window)</h4>
+          <p>The order enters the mandatory holding window. The buyer waits for the product to arrive, uses it, and posts an authentic review on the marketplace once 4 to 5 days have elapsed.</p>
+        </div>
+      </div>
+
+      <div class="step-box avoid-break">
+        <div class="step-icon">6</div>
+        <div class="step-content">
+          <h4>Live Review Verification</h4>
+          <p>The marketplace approves and publishes the buyer's product review. The buyer takes a clear screenshot displaying the 5-star rating, review headline, and text.</p>
+        </div>
+      </div>
+
+      <div class="step-box active-step avoid-break">
+        <div class="step-icon">7</div>
+        <div class="step-content">
+          <h4>Google Refund Form Submission (20-Day Rule)</h4>
+          <p>The buyer opens the <strong>Google Refund Form</strong> (must be completed within <strong>20 days of delivery</strong>). They submit the live review screenshot, their UPI ID / Bank details, and the Marketplace Order ID. The portal updates the order status to <strong>REFUND FORM SUBMITTED</strong>.</p>
+        </div>
+      </div>
+
+      <div class="step-box avoid-break">
+        <div class="step-icon">8</div>
+        <div class="step-content">
+          <h4>Agency Dual-Verification & Security Audit</h4>
+          <p>The Admin team accesses the <strong>Master Orders Hub</strong> (<code>/admin/orders</code>), reviews the Order Form screenshot against the live review screenshot, verifies buyer identity, and confirms deal rules.</p>
+        </div>
+      </div>
+
+      <div class="step-box active-step avoid-break">
+        <div class="step-icon">9</div>
+        <div class="step-content">
+          <h4>Reimbursement Disbursement (20–25 Working Days)</h4>
+          <p>The approved refund amount is disbursed directly to the buyer's UPI or bank account within 20 to 25 working days. The admin logs the official Bank UTR or UPI transaction reference into the system.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 3: BUYER (CUSTOMER) PORTAL MANUAL -->
+    <!-- ========================================================================= -->
+    <section class="page-break">
+      <div class="section-header">
+        <div class="section-num">3</div>
+        <h2 class="section-title">Buyer Portal Manual & Page Walkthrough</h2>
+      </div>
+
+      <!-- Page 1: Buyer Deals -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>🛍️ Explore Active Deals</span>
+          <span class="url-pill">/buyer/deals</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 12px;">
+          This is the buyer's shopping center where all live campaigns posted by the agency are listed.
+        </p>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7; margin-bottom: 14px;">
+          <li><strong>Dynamic Marketplace Buttons:</strong> Automatically detects the platform link and renders a branded button: <code>Buy on Flipkart →</code>, <code>Buy on Amazon →</code>, <code>Buy on Myntra →</code>, <code>Buy on Meesho →</code>, or <code>Buy on Ajio →</code>.</li>
+          <li><strong>Remaining Slot Indicators:</strong> Displays live meters for <em>Rating Slots</em> and <em>Review Slots</em>. Deals with 0 slots disable buying to prevent over-orders.</li>
+          <li><strong>Custom Luxury Dropdowns:</strong> Seamless filtering by offer type (<em>100% Full Refund</em>, <em>Less / Deduction</em>, <em>Commission Bonus</em>).</li>
+          <li><strong>Direct Action Links:</strong> Each deal card includes direct buttons to open the <code>Google Order Form</code> and <code>Google Refund Form</code> with pre-filled deal codes.</li>
+          <li><strong>View Mode Switcher:</strong> Switch between <strong>Column (Grid) View</strong> and <strong>Row (List) View</strong> based on user preference.</li>
+        </ul>
+      </div>
+
+      <!-- Page 2: Buyer Dashboard -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>📦 My Orders & Refund Tracking</span>
+          <span class="url-pill">/buyer</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 12px;">
+          The centralized tracking hub where buyers monitor every order from placement to refund claim.
+        </p>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7; margin-bottom: 14px;">
+          <li><strong>3-Step Operational Stepper:</strong> Clearly illustrates the 3 stages:
+            <ol style="margin-left: 20px; margin-top: 4px;">
+              <li><code>1. Order Form Filled</code> (Order registered)</li>
+              <li><code>2. Holding Period (4–5 Days)</code> (Awaiting product delivery & review window)</li>
+              <li><code>3. Refund Form Submitted</code> (Refund claim registered and logged)</li>
+            </ol>
+          </li>
+          <li><strong>20-Day Countdown Reminder:</strong> Displays the days remaining before the 20-day refund claim window closes.</li>
+          <li><strong>Claim / Link Order ID Tool:</strong> If a buyer filled the Google Order Form before logging in, they can paste their Marketplace Order ID to immediately link and claim the order into their dashboard.</li>
+          <li><strong>Status Badges:</strong> Clear badges showing <code>REFUND FORM SUBMITTED</code> or <code>AWAITING REVIEW</code>.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 4: MEDIATOR (PREMIUM AGENT) DESK MANUAL -->
+    <!-- ========================================================================= -->
+    <section class="page-break">
+      <div class="section-header">
+        <div class="section-num">4</div>
+        <h2 class="section-title">Premium Mediator / Agent Desk Manual</h2>
+      </div>
+
+      <!-- Page 1: Mediator Deals -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>💼 Live Deals & 1-Click WhatsApp Pitch Studio</span>
+          <span class="url-pill">/mediator/deals</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 12px;">
+          The mediator's primary workspace for distributing deals and driving conversions.
+        </p>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7; margin-bottom: 14px;">
+          <li><strong>1-Click WhatsApp Pitch Generator:</strong> Generates formatted marketing copy with deal highlights, pricing, and links. Automatically appends <code>?entry.mediatorCode=YOUR_CODE</code> to the Google Form link so the mediator is credited for every buyer order.</li>
+          <li><strong>Real-time Slot Meters:</strong> Shows exactly how many slots remain before promoting a deal.</li>
+          <li><strong>One-Click Deal Code Copier:</strong> Copy ASIN/SKU codes directly to the clipboard with visual confirmation.</li>
+        </ul>
+      </div>
+
+      <!-- Page 2: Mediator Orders -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>📋 Client Orders Book</span>
+          <span class="url-pill">/mediator/orders</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 12px;">
+          A real-time ledger of all orders submitted by buyers using the mediator's unique code.
+        </p>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7;">
+          <li>Tracks buyer progress across the holding period and review submission.</li>
+          <li>Alerts the mediator when a buyer's 20-day refund window is about to lapse so they can prompt the buyer to submit their refund claim.</li>
+        </ul>
+      </div>
+
+      <!-- Page 3: Mediator Settings -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>⚙️ Agent Profile & Payout Settings</span>
+          <span class="url-pill">/mediator/settings</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700);">
+          Displays the mediator's permanent agency code (e.g., <code>#LAX096</code>) and allows configuring their verified UPI ID to receive monthly commission disbursements.
+        </p>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 5: MASTER ADMIN COMMAND SUITE MANUAL -->
+    <!-- ========================================================================= -->
+    <section class="page-break">
+      <div class="section-header">
+        <div class="section-num">5</div>
+        <h2 class="section-title">Master Admin Command Suite Manual</h2>
+      </div>
+
+      <!-- Admin Orders Hub -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>📑 Master Orders Hub & Dual-Verification Desk</span>
+          <span class="url-pill">/admin/orders</span>
+        </div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 12px;">
+          The financial and operational engine of Lakshmi Agency where all webhook-synced orders converge.
+        </p>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7; margin-bottom: 12px;">
+          <li><strong>Live Synced Stream:</strong> Orders automatically appear within seconds of Google Form submission.</li>
+          <li><strong>Dual-Proof Audit:</strong> Admins can inspect both Form 1 (Order Proof) and Form 2 (Review Proof) screenshots side-by-side.</li>
+          <li><strong>Payout Execution:</strong> Mark an order as <em>Approved & Paid</em> and record the official <strong>Bank UTR / UPI Reference</strong>.</li>
+          <li><strong>Automated Fraud Rejection:</strong> If an order is fraudulent, rejecting it automatically restores the deal slot (+1) and notifies the buyer.</li>
+        </ul>
+      </div>
+
+      <!-- Admin Deals Studio -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>🎯 Deals Studio (Campaign Creation)</span>
+          <span class="url-pill">/admin/deals</span>
+        </div>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7;">
+          <li><strong>Create Deals:</strong> Select from brand & marketplace dropdowns, set ASIN/SKU, input price, and define pricing model (<code>LESS</code>, <code>COMMISSION</code>, or <code>FULL_REFUND</code>).</li>
+          <li><strong>Split Quotas:</strong> Allocate distinct counts for Rating Slots vs Review Slots.</li>
+          <li><strong>Direct Image Uploads:</strong> Built-in Cloudinary integration for 1-click product image uploads.</li>
+        </ul>
+      </div>
+
+      <!-- Admin Settings & Catalog -->
+      <div class="card avoid-break">
+        <div class="card-title">
+          <span>⚙️ WhatsApp Pitch Templates & Webhook Configuration</span>
+          <span class="url-pill">/admin/settings</span>
+        </div>
+        <ul style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.7;">
+          <li>Update official Google Order Form and Google Refund Form URLs globally across the app.</li>
+          <li>Manage webhook security tokens and customize default WhatsApp marketing pitch templates.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 6: GOOGLE FORMS & WEBHOOK INTEGRATION -->
+    <!-- ========================================================================= -->
+    <section class="page-break">
+      <div class="section-header">
+        <div class="section-num">6</div>
+        <h2 class="section-title">Google Forms & Sheets Webhook Setup Guide</h2>
+      </div>
+
+      <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 16px;">
+        Lakshmi Agency syncs in real-time with Google Sheets via a Google Apps Script webhook trigger. Follow this 2-minute setup guide inside the sheet linked to your Google Form(s):
+      </p>
+
+      <div class="card card-luxury avoid-break">
+        <div class="card-title">⚡ 4-Step Google Sheet Setup Instructions</div>
+        <ol style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.8;">
+          <li>Open the Google Sheet linked to your Google Form.</li>
+          <li>Click top menu: <strong>Extensions</strong> → <strong>Apps Script</strong>.</li>
+          <li>Delete any default code and paste the code from <code>src/scripts/googleAppsScript.js</code>.</li>
+          <li>Click the <strong>Triggers (⏰)</strong> icon on the left menu → Click <strong>+ Add Trigger</strong>:
+            <ul style="margin-left: 20px; margin-top: 4px;">
+              <li>Function: <code>onFormSubmit</code></li>
+              <li>Event Source: <strong>From spreadsheet</strong></li>
+              <li>Event Type: <strong>On form submit</strong></li>
+              <li>Click <strong>Save</strong> and accept Google permissions.</li>
+            </ul>
+          </li>
+        </ol>
+      </div>
+
+      <div class="card avoid-break">
+        <div class="card-title">🔧 Troubleshooting: How to Re-sync Failed Submissions</div>
+        <p style="font-size: 13px; color: var(--gray-700); margin-bottom: 10px;">
+          If any row in your Google Sheet shows <code>⚠️ SYNC PENDING</code>:
+        </p>
+        <ol style="font-size: 13px; color: var(--gray-700); padding-left: 20px; line-height: 1.8;">
+          <li>Open <strong>Extensions</strong> → <strong>Apps Script</strong>.</li>
+          <li>In the function dropdown at the top, select <strong><code>syncAllPendingRows</code></strong>.</li>
+          <li>Click <strong>Run (▶)</strong>.</li>
+          <li>The script will immediately push all pending rows to <code>https://www.lakshmiagency.net</code> and update the sheet to <code>✅ ORDER REGISTERED & SLOTS DEDUCTED</code>!</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- ========================================================================= -->
+    <!-- SECTION 7: OFFICIAL AGENCY RULES & COMPLIANCE -->
+    <!-- ========================================================================= -->
+    <section class="avoid-break">
+      <div class="section-header">
+        <div class="section-num">7</div>
+        <h2 class="section-title">Official Agency Rules & Compliance Policies</h2>
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #1 (Order Form Mandate):</strong> The Google Order Form must be completed immediately after placing the order on Amazon/Flipkart. Orders not registered via the Order Form cannot be claimed or refunded.
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #2 (Review Holding Window):</strong> Product reviews must only be submitted after <strong>4 to 5 days of delivery</strong>. Immediate or premature reviews trigger marketplace fraud filters and will be rejected.
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #3 (20-Day Refund Claim Deadline):</strong> The Google Refund Form must be completed within <strong>20 calendar days of delivery</strong>. Claims submitted after 20 days are permanently closed.
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #4 (Reimbursement Timeline):</strong> Verified refunds are disbursed within <strong>20 to 25 working days</strong> (excluding weekends and government holidays).
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #5 (Non-Refundable Charges):</strong> Cash-on-Delivery (COD) charges, marketplace shipping fees, and convenience charges are non-refundable. Only the agreed product amount is refunded.
+      </div>
+
+      <div class="rule-box">
+        <strong>Rule #6 (Anti-Fraud Cross-Verification):</strong> Each Marketplace Order ID is unique. Duplicate submissions, edited review screenshots, or cancelled orders will be blacklisted across all agency campaigns.
+      </div>
+    </section>
+
+    <!-- Document Footer -->
+    <div class="doc-footer">
+      <div style="font-weight: 800; font-size: 13px; color: var(--plum-950); margin-bottom: 4px;">LAKSHMI AGENCY</div>
+      <div>“Your Needs... Our Priority...”</div>
+      <div style="margin-top: 8px; opacity: 0.7;">Official Documentation • Confidential Proprietary Document • &copy; 2026 Lakshmi Agency. All rights reserved.</div>
+    </div>
+
+  </div>
+
+</body>
+</html>
