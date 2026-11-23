@@ -16,21 +16,30 @@ export async function GET(req: NextRequest) {
     // @ts-ignore
     const userId = session.user.id;
 
-    const notifications = await Notification.find({ recipient: userId })
-      .sort({ createdAt: -1 })
-      .limit(50)
-      .lean();
+    // Run query and unread count in parallel for maximum speed
+    const [notifications, unreadCount] = await Promise.all([
+      Notification.find({ recipient: userId })
+        .sort({ createdAt: -1 })
+        .limit(50)
+        .lean(),
+      Notification.countDocuments({
+        recipient: userId,
+        isRead: false,
+      }),
+    ]);
 
-    const unreadCount = await Notification.countDocuments({
-      recipient: userId,
-      isRead: false,
-    });
-
-    return NextResponse.json({
-      success: true,
-      notifications,
-      unreadCount,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        notifications,
+        unreadCount,
+      },
+      {
+        headers: {
+          "Cache-Control": "private, no-cache, no-store, must-revalidate",
+        },
+      }
+    );
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

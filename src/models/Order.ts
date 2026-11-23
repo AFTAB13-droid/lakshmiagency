@@ -103,6 +103,11 @@ const OrderSchema = new Schema<IOrder>(
 );
 
 OrderSchema.index({ mediator: 1, status: 1 });
+OrderSchema.index({ buyer: 1, createdAt: -1 });
+OrderSchema.index({ buyerEmail: 1, createdAt: -1 });
+OrderSchema.index({ buyerPhone: 1, createdAt: -1 });
+OrderSchema.index({ status: 1, createdAt: -1 });
+OrderSchema.index({ createdAt: -1 });
 
 export const Order: Model<IOrder> =
   mongoose.models.Order || mongoose.model<IOrder>("Order", OrderSchema);

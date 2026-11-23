@@ -22,7 +22,7 @@
  */
 
 // Production API Webhook Base URL
-const WEBHOOK_BASE_URL = "https://lakshmiagency.in/api/webhooks/google-form";
+const WEBHOOK_BASE_URL = "https://lakshmiagency.net/api/webhooks/google-form";
 const SECRET_TOKEN = "lakshmi_agency_secure_webhook_token_2026";
 
 /**

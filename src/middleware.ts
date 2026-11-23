@@ -47,41 +47,56 @@ export async function middleware(request: NextRequest) {
   // 2. Global Rate Limiting for /api routes
   // =========================================================================
   if (pathname.startsWith("/api")) {
-    let limit = 80; // general API limit per minute
-    let windowMs = 60 * 1000;
+    const isWebhookWithSecret =
+      pathname.startsWith("/api/webhooks") &&
+      request.headers.get("x-webhook-secret") ===
+        (process.env.GOOGLE_WEBHOOK_SECRET || "lakshmi_agency_secure_webhook_token_2026");
 
-    if (
-      pathname.startsWith("/api/auth/register") ||
-      pathname.startsWith("/api/auth/forgot-password") ||
-      pathname.startsWith("/api/auth/callback")
-    ) {
-      limit = 20; // 20 requests/minute for sensitive auth
-    } else if (pathname.startsWith("/api/webhooks")) {
-      limit = 45; // 45 webhook requests/minute
-    }
+    // Do not throttle authenticated Google Form webhook triggers
+    if (!isWebhookWithSecret) {
+      let limit = 120; // General API limit per minute per IP
+      let windowMs = 60 * 1000;
 
-    const rateKey = `${ip}:${pathname.startsWith("/api/auth") ? "auth" : "api"}`;
-    const entry = ipRequestCounts.get(rateKey);
+      if (
+        pathname.startsWith("/api/auth/register") ||
+        pathname.startsWith("/api/auth/forgot-password") ||
+        pathname.startsWith("/api/auth/callback")
+      ) {
+        limit = 25; // 25 requests/minute for sensitive auth
+      } else if (pathname.startsWith("/api/notifications")) {
+        limit = 150; // High allowance for fast 9s notifications polling
+      }
 
-    if (!entry || now > entry.resetAt) {
-      ipRequestCounts.set(rateKey, { count: 1, resetAt: now + windowMs });
-    } else {
-      entry.count += 1;
-      if (entry.count > limit) {
-        const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
-        return new NextResponse(
-          JSON.stringify({
-            error: "Too Many Requests. High-frequency request protection triggered.",
-            retryAfterSeconds: retryAfter,
-          }),
-          {
-            status: 429,
-            headers: {
-              "Content-Type": "application/json",
-              "Retry-After": String(retryAfter),
-            },
-          }
-        );
+      // Memory cleanup if map grows too large
+      if (ipRequestCounts.size > 1000) {
+        ipRequestCounts.forEach((val, key) => {
+          if (now > val.resetAt) ipRequestCounts.delete(key);
+        });
+      }
+
+      const rateKey = `${ip}:${pathname.startsWith("/api/auth") ? "auth" : "api"}`;
+      const entry = ipRequestCounts.get(rateKey);
+
+      if (!entry || now > entry.resetAt) {
+        ipRequestCounts.set(rateKey, { count: 1, resetAt: now + windowMs });
+      } else {
+        entry.count += 1;
+        if (entry.count > limit) {
+          const retryAfter = Math.ceil((entry.resetAt - now) / 1000);
+          return new NextResponse(
+            JSON.stringify({
+              error: "Too Many Requests. High-frequency request protection triggered.",
+              retryAfterSeconds: retryAfter,
+            }),
+            {
+              status: 429,
+              headers: {
+                "Content-Type": "application/json",
+                "Retry-After": String(retryAfter),
+              },
+            }
+          );
+        }
       }
     }
   }

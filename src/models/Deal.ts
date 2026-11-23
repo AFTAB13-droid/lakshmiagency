@@ -82,6 +82,8 @@ const DealSchema = new Schema<IDeal>(
 );
 
 DealSchema.index({ isActive: 1, remainingSlots: 1 });
+DealSchema.index({ isActive: 1, createdAt: -1 });
+DealSchema.index({ marketplace: 1, isActive: 1 });
 
 export const Deal: Model<IDeal> =
   mongoose.models.Deal || mongoose.model<IDeal>("Deal", DealSchema);

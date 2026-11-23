@@ -87,8 +87,23 @@ export default function NotificationDrawer() {
 
   useEffect(() => {
     fetchNotifications();
-    const interval = setInterval(() => fetchNotifications(false), 9000); // Speedy 9s poll
-    return () => clearInterval(interval);
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications(false);
+      }
+    }, 9000);
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        fetchNotifications(false);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+    };
   }, [soundEnabled]);
 
   // Mark all as read
