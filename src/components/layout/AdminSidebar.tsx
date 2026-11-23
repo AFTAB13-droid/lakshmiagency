@@ -198,7 +198,14 @@ export default function AdminSidebar() {
           {/* Bottom Profile & Sign Out Bar */}
           <div className="p-4 border-t border-plum-100/80 bg-gradient-to-t from-plum-50/60 to-transparent">
             <button
-              onClick={() => signOut({ callbackUrl: "/login" })}
+              onClick={async () => {
+                try {
+                  await signOut({ redirect: false });
+                } catch (e) {
+                  console.error(e);
+                }
+                window.location.href = "/login";
+              }}
               className="w-full flex items-center justify-between p-3 rounded-2xl bg-white hover:bg-red-50 text-gray-700 hover:text-red-700 border border-plum-100 hover:border-red-200 transition-all shadow-sm group hover:scale-[1.01] active:scale-[0.99]"
             >
               <div className="flex items-center gap-3 min-w-0">

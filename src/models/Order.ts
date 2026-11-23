@@ -61,7 +61,7 @@ const OrderSchema = new Schema<IOrder>(
   {
     marketplaceOrderId: { type: String, required: true, unique: true, trim: true },
     dealId: { type: Schema.Types.ObjectId, ref: "Deal" },
-    productCode: { type: String, required: true, uppercase: true, trim: true },
+    productCode: { type: String, default: "GENERAL", uppercase: true, trim: true },
     productName: { type: String, default: "" },
     brandName: { type: String, default: "" },
     marketplace: { type: String, default: "Amazon" },
@@ -69,9 +69,9 @@ const OrderSchema = new Schema<IOrder>(
     payoutAmount: { type: Number, default: 0 },
 
     buyer: { type: Schema.Types.ObjectId, ref: "User" },
-    buyerName: { type: String, required: true, trim: true },
+    buyerName: { type: String, default: "Valued Buyer", trim: true },
     buyerEmail: { type: String, trim: true, lowercase: true },
-    buyerPhone: { type: String, required: true, trim: true },
+    buyerPhone: { type: String, default: "N/A", trim: true },
     orderScreenshotUrl: { type: String, default: "" },
     reviewScreenshotUrl: { type: String, default: "" },
     upiId: { type: String, default: "" },

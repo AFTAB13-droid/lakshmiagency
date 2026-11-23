@@ -2,6 +2,7 @@
 
 import React from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import CustomDropdown from "@/components/common/CustomDropdown";
 
 interface PaginationProps {
   currentPage: number;
@@ -54,20 +55,19 @@ export default function Pagination({
         {onPageSizeChange && (
           <div className="hidden sm:flex items-center gap-1.5 ml-2 pl-3 border-l border-plum-100">
             <span className="text-[11px] text-gray-400">Rows per page:</span>
-            <select
-              value={pageSize}
-              onChange={(e) => {
-                onPageSizeChange(Number(e.target.value));
+            <CustomDropdown
+              value={String(pageSize)}
+              onChange={(val) => {
+                onPageSizeChange(Number(val));
                 onPageChange(1);
               }}
-              className="py-1 px-2 rounded-lg border border-plum-200 text-xs font-bold text-plum-900 bg-plum-50/50 focus:outline-none focus:ring-1 focus:ring-plum-400"
-            >
-              {pageSizeOptions.map((opt) => (
-                <option key={opt} value={opt}>
-                  {opt}
-                </option>
-              ))}
-            </select>
+              options={pageSizeOptions.map((opt) => ({
+                value: String(opt),
+                label: String(opt),
+              }))}
+              className="w-20"
+              size="sm"
+            />
           </div>
         )}
       </div>

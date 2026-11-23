@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import SafeImage from "@/components/common/SafeImage";
 import Pagination from "@/components/common/Pagination";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
+import CustomDropdown from "@/components/common/CustomDropdown";
 import {
   Tag,
   Search,
@@ -59,30 +60,52 @@ export default function BuyerDealsPage() {
     setCurrentPage(1);
   }, [search, marketplaceFilter, pricingFilter]);
 
-  // Marketplace badge styling
-  const getMarketplaceBadge = (marketplace: string) => {
+  // Dynamic Marketplace detection & badge styling
+  const getMarketplaceInfo = (marketplace?: string, productLink?: string) => {
+    const link = (productLink || "").toLowerCase();
     const m = (marketplace || "").toLowerCase();
-    if (m.includes("amazon")) {
-      return {
-        bg: "bg-[#232F3E] text-[#FF9900] border-[#FF9900]/30",
-        label: "Amazon",
-      };
-    }
-    if (m.includes("flipkart")) {
+
+    if (link.includes("flipkart.com") || m.includes("flipkart")) {
       return {
         bg: "bg-[#2874F0] text-white border-blue-400/40",
+        btnBg: "bg-gradient-to-r from-[#2874F0] to-[#1a5bc7] hover:from-[#2065d6] hover:to-[#1349a3] text-white shadow-blue-500/20",
         label: "Flipkart",
       };
     }
-    if (m.includes("myntra")) {
+    if (link.includes("amazon.") || link.includes("amzn.") || m.includes("amazon")) {
+      return {
+        bg: "bg-[#232F3E] text-[#FF9900] border-[#FF9900]/30",
+        btnBg: "bg-gradient-to-r from-[#232F3E] to-[#131921] hover:from-[#131921] hover:to-[#0b0e13] text-[#FF9900] shadow-amber-500/15",
+        label: "Amazon",
+      };
+    }
+    if (link.includes("myntra.com") || m.includes("myntra")) {
       return {
         bg: "bg-[#FF3F6C] text-white border-pink-400/40",
+        btnBg: "bg-gradient-to-r from-[#FF3F6C] to-[#d62650] hover:from-[#e0325d] hover:to-[#be1f44] text-white shadow-pink-500/20",
         label: "Myntra",
       };
     }
+    if (link.includes("meesho.com") || m.includes("meesho")) {
+      return {
+        bg: "bg-[#9F2089] text-white border-purple-400/40",
+        btnBg: "bg-gradient-to-r from-[#9F2089] to-[#791566] hover:from-[#891674] hover:to-[#671056] text-white shadow-purple-500/20",
+        label: "Meesho",
+      };
+    }
+    if (link.includes("ajio.com") || m.includes("ajio")) {
+      return {
+        bg: "bg-[#2C4152] text-white border-slate-400/40",
+        btnBg: "bg-gradient-to-r from-[#2C4152] to-[#1C2C39] hover:from-[#1C2C39] hover:to-[#121c24] text-white shadow-slate-500/20",
+        label: "Ajio",
+      };
+    }
+
+    const fallbackLabel = marketplace || "Marketplace";
     return {
       bg: "bg-plum-900 text-gold-300 border-gold-400/30",
-      label: marketplace || "Marketplace",
+      btnBg: "bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white shadow-plum-950/20",
+      label: fallbackLabel,
     };
   };
 
@@ -241,17 +264,19 @@ export default function BuyerDealsPage() {
             ))}
           </div>
 
-          {/* Pricing Model Selector */}
-          <select
+          {/* Custom Luxury Pricing Model Selector */}
+          <CustomDropdown
             value={pricingFilter}
-            onChange={(e) => setPricingFilter(e.target.value)}
-            className="px-3.5 py-2 rounded-xl border border-plum-200 text-xs font-bold text-plum-900 bg-[#FAF5F8] focus:outline-none"
-          >
-            <option value="ALL">All Offer Types</option>
-            <option value="FULL_REFUND">100% Full Refund</option>
-            <option value="LESS">Less / Deduction</option>
-            <option value="COMMISSION">Commission Bonus</option>
-          </select>
+            onChange={(val) => setPricingFilter(val)}
+            options={[
+              { value: "ALL", label: "All Offer Types" },
+              { value: "FULL_REFUND", label: "100% Full Refund" },
+              { value: "LESS", label: "Less / Deduction" },
+              { value: "COMMISSION", label: "Commission Bonus" },
+            ]}
+            className="w-48"
+            size="sm"
+          />
 
           {/* View Mode Toggle */}
           <div className="flex items-center bg-[#FAF5F8] p-1 rounded-xl border border-plum-100">
@@ -295,7 +320,7 @@ export default function BuyerDealsPage() {
         /* GRID / COLUMN VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {paginatedDeals.map((deal) => {
-            const mkt = getMarketplaceBadge(deal.marketplace);
+            const mkt = getMarketplaceInfo(deal.marketplace, deal.productLink);
             const isFull = (deal.remainingSlots ?? 0) <= 0;
             const ratingTotal = deal.ratingSlots || 1;
             const ratingRem = deal.remainingRating ?? 0;
@@ -429,10 +454,10 @@ export default function BuyerDealsPage() {
                       href={deal.productLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white font-black text-xs shadow-md shadow-plum-950/20 flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95"
+                      className={`w-full py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95 ${mkt.btnBg}`}
                     >
                       <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
-                      Buy Product on {mkt.label} →
+                      Buy on {mkt.label} →
                     </a>
                   ) : (
                     <div className="text-center py-2 text-[10px] text-gray-400 italic">
@@ -473,7 +498,7 @@ export default function BuyerDealsPage() {
         /* ROW / LIST VIEW */
         <div className="space-y-4">
           {paginatedDeals.map((deal) => {
-            const mkt = getMarketplaceBadge(deal.marketplace);
+            const mkt = getMarketplaceInfo(deal.marketplace, deal.productLink);
             const ratingTotal = deal.ratingSlots || 1;
             const ratingRem = deal.remainingRating ?? 0;
             const reviewTotal = deal.reviewSlots || 1;
@@ -529,10 +554,10 @@ export default function BuyerDealsPage() {
                       href={deal.productLink}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="px-4 py-2 rounded-xl bg-plum-900 hover:bg-plum-950 text-white font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs"
+                      className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs ${mkt.btnBg}`}
                     >
                       <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
-                      Buy on {mkt.label}
+                      Buy on {mkt.label} →
                     </a>
                   )}
 

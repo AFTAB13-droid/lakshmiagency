@@ -48,6 +48,17 @@ export const authOptions: NextAuthOptions = {
     }),
   ],
   callbacks: {
+    async redirect({ url, baseUrl }) {
+      // If relative URL, return it directly so the client resolves on current origin
+      if (url.startsWith("/")) return url;
+      // If same origin, allow it
+      try {
+        if (new URL(url).origin === baseUrl) return url;
+      } catch {
+        return "/login";
+      }
+      return "/login";
+    },
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id;

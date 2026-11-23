@@ -43,24 +43,21 @@ export default function LoginPage() {
       if (res?.error) {
         triggerShake();
         toast.error(res.error || "Authentication failed");
+        setLoading(false);
       } else {
         toast.success("Welcome back to Lakshmi Agency!");
-        const sessionRes = await fetch("/api/auth/session");
-        const session = await sessionRes.json();
-        const userRole = session?.user?.role;
+        
+        // Instant AspireMint-style immediate navigation without redundant session fetch
+        const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+        const callbackUrl = searchParams?.get("callbackUrl");
+        const defaultDest = roleTab === "ADMIN" ? "/admin" : roleTab === "PREMIUM_USER" ? "/mediator" : "/buyer";
+        const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : defaultDest;
 
-        if (userRole === "ADMIN") {
-          router.push("/admin");
-        } else if (userRole === "PREMIUM_USER") {
-          router.push("/mediator");
-        } else {
-          router.push("/buyer");
-        }
+        window.location.href = target;
       }
     } catch (err) {
       triggerShake();
       toast.error("An unexpected error occurred");
-    } finally {
       setLoading(false);
     }
   };

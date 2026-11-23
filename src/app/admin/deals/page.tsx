@@ -20,6 +20,7 @@ import {
 import Pagination from "@/components/common/Pagination";
 import SafeImage from "@/components/common/SafeImage";
 import DealCard from "@/components/deals/DealCard";
+import CustomDropdown from "@/components/common/CustomDropdown";
 
 export default function AdminDealsPage() {
   const [deals, setDeals] = useState<any[]>([]);
@@ -361,34 +362,27 @@ export default function AdminDealsPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-plum-900 mb-1">Brand Name *</label>
-                  <select
+                  <CustomDropdown
                     value={formData.brandName}
-                    onChange={(e) => setFormData({ ...formData, brandName: e.target.value })}
-                    required
-                    className="w-full px-3 py-2 rounded-xl border border-plum-100 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-plum-400"
-                  >
-                    <option value="">Select Brand</option>
-                    {brands.map((b) => (
-                      <option key={b._id} value={b.name}>
-                        {b.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, brandName: val })}
+                    options={brands.map((b) => ({ value: b.name, label: b.name }))}
+                    placeholder="Select Brand"
+                    searchable={true}
+                    className="w-full"
+                    size="md"
+                  />
                 </div>
 
                 <div>
                   <label className="block text-xs font-semibold text-plum-900 mb-1">Marketplace / Platform *</label>
-                  <select
+                  <CustomDropdown
                     value={formData.marketplace}
-                    onChange={(e) => setFormData({ ...formData, marketplace: e.target.value })}
-                    className="w-full px-3 py-2 rounded-xl border border-plum-100 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-plum-400"
-                  >
-                    {marketplaces.map((m) => (
-                      <option key={m._id} value={m.name}>
-                        {m.name}
-                      </option>
-                    ))}
-                  </select>
+                    onChange={(val) => setFormData({ ...formData, marketplace: val })}
+                    options={marketplaces.map((m) => ({ value: m.name, label: m.name }))}
+                    placeholder="Select Marketplace"
+                    className="w-full"
+                    size="md"
+                  />
                 </div>
               </div>
 

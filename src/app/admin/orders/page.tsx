@@ -17,6 +17,7 @@ import {
   Package,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
+import CustomDropdown from "@/components/common/CustomDropdown";
 
 export default function AdminOrdersPage() {
   const [orders, setOrders] = useState<any[]>([]);
@@ -169,18 +170,20 @@ export default function AdminOrdersPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-3.5 h-3.5 text-gray-400" />
-          <select
+          <CustomDropdown
             value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            className="px-4 py-2.5 rounded-2xl border border-plum-200 text-xs bg-white text-plum-900 font-extrabold focus:outline-none focus:ring-2 focus:ring-plum-400 w-full sm:w-auto shadow-2xs"
-          >
-            <option value="ALL">All Statuses ({orders.length})</option>
-            <option value="ORDER_FILLED">Step 2: Order Filled (Holding)</option>
-            <option value="REFUND_FORM_FILLED">Step 5: Refund Form Filled (Pending Payout)</option>
-            <option value="APPROVED_AND_PAID">Step 7: Approved & Paid</option>
-            <option value="REJECTED">Rejected</option>
-          </select>
+            onChange={(val) => setStatusFilter(val)}
+            options={[
+              { value: "ALL", label: `All Statuses (${orders.length})` },
+              { value: "ORDER_FILLED", label: "Step 2: Order Filled (Holding)" },
+              { value: "REFUND_FORM_FILLED", label: "Step 5: Refund Form Filled" },
+              { value: "APPROVED_AND_PAID", label: "Step 7: Approved & Paid" },
+              { value: "REJECTED", label: "Rejected" },
+            ]}
+            icon={<Filter className="w-3.5 h-3.5 text-plum-600" />}
+            className="w-full sm:w-64"
+            size="md"
+          />
         </div>
       </div>
 

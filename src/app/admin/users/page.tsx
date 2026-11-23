@@ -21,6 +21,7 @@ import {
 } from "lucide-react";
 import UserDetailsModal from "@/components/admin/UserDetailsModal";
 import Pagination from "@/components/common/Pagination";
+import CustomDropdown from "@/components/common/CustomDropdown";
 
 export default function AdminUsersPage() {
   const [users, setUsers] = useState<any[]>([]);
@@ -142,17 +143,19 @@ export default function AdminUsersPage() {
         </div>
 
         <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-3.5 h-3.5 text-gray-400" />
-          <select
+          <CustomDropdown
             value={roleFilter}
-            onChange={(e) => setRoleFilter(e.target.value)}
-            className="px-4 py-2.5 rounded-2xl border border-plum-200 text-xs bg-white text-plum-900 font-extrabold focus:outline-none focus:ring-2 focus:ring-plum-400 w-full sm:w-auto shadow-2xs"
-          >
-            <option value="ALL">All Roles ({users.length})</option>
-            <option value="PREMIUM_USER">Premium Mediators ({totalMediators})</option>
-            <option value="USER">Buyers ({totalBuyers})</option>
-            <option value="ADMIN">Admins</option>
-          </select>
+            onChange={(val) => setRoleFilter(val)}
+            options={[
+              { value: "ALL", label: `All Roles (${users.length})` },
+              { value: "PREMIUM_USER", label: `Premium Mediators (${totalMediators})` },
+              { value: "USER", label: `Buyers (${totalBuyers})` },
+              { value: "ADMIN", label: "Admins" },
+            ]}
+            icon={<Filter className="w-3.5 h-3.5 text-plum-600" />}
+            className="w-full sm:w-60"
+            size="md"
+          />
         </div>
       </div>
 

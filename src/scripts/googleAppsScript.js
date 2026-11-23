@@ -21,8 +21,8 @@
  * ==============================================================================
  */
 
-// Production API Webhook Base URL
-const WEBHOOK_BASE_URL = "https://lakshmiagency.net/api/webhooks/google-form";
+// Production Canonical API Webhook Base URL (Always use www.lakshmiagency.net to avoid 308 redirects)
+const WEBHOOK_BASE_URL = "https://www.lakshmiagency.net/api/webhooks/google-form";
 const SECRET_TOKEN = "lakshmi_agency_secure_webhook_token_2026";
 
 /**
@@ -32,8 +32,11 @@ function onFormSubmit(e) {
   try {
     const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
-    const rowValues = e.values;
-    const rowIndex = e.range ? e.range.getRow() : sheet.getLastRow();
+    const rowValues = e ? e.values : null;
+    const rowIndex = e && e.range ? e.range.getRow() : sheet.getLastRow();
+
+    // Fallback if rowValues is not provided by trigger event (manual run)
+    const currentRowValues = rowValues || sheet.getRange(rowIndex, 1, 1, sheet.getLastColumn()).getValues()[0];
 
     // Convert row submission into a structured key-value payload
     const payload = {
@@ -44,7 +47,7 @@ function onFormSubmit(e) {
 
     for (let i = 0; i < headers.length; i++) {
       const headerKey = headers[i].toString().trim();
-      const value = rowValues[i] ? rowValues[i].toString().trim() : "";
+      const value = currentRowValues[i] ? currentRowValues[i].toString().trim() : "";
       payload.data[headerKey] = value;
     }
 
@@ -58,9 +61,10 @@ function onFormSubmit(e) {
       dataString.includes("review screenshot") ||
       dataString.includes("claim");
 
-    const endpoint = isRefundForm
-      ? `${WEBHOOK_BASE_URL}/refund`
-      : `${WEBHOOK_BASE_URL}/order`;
+    // Pass secret in both URL query param and header to ensure 100% delivery across all network hops
+    const endpoint =
+      (isRefundForm ? `${WEBHOOK_BASE_URL}/refund` : `${WEBHOOK_BASE_URL}/order`) +
+      `?secret=${encodeURIComponent(SECRET_TOKEN)}`;
 
     const options = {
       method: "post",
@@ -70,6 +74,7 @@ function onFormSubmit(e) {
       },
       payload: JSON.stringify(payload),
       muteHttpExceptions: true,
+      followRedirects: true,
     };
 
     Logger.log("Sending payload to: " + endpoint);
@@ -145,5 +150,25 @@ function notifyBuyerNoOrderForm(data) {
     }
   } catch (e) {
     Logger.log("Email Notification Error: " + e.toString());
+  }
+}
+
+/**
+ * UTILITY FUNCTION: Run this from Apps Script editor to re-sync any rows marked 'SYNC PENDING'
+ */
+function syncAllPendingRows() {
+  const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+  const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  const lastRow = sheet.getLastRow();
+  let statusCol = headers.findIndex((h) => h.toString().toLowerCase().includes("sync status")) + 1;
+  if (statusCol === 0) statusCol = headers.length + 1;
+
+  for (let r = 2; r <= lastRow; r++) {
+    const statusVal = sheet.getRange(r, statusCol).getValue().toString();
+    if (statusVal.includes("PENDING") || !statusVal || statusVal.includes("Review Needed")) {
+      Logger.log("Re-syncing row #" + r);
+      const rowValues = sheet.getRange(r, 1, 1, sheet.getLastColumn()).getValues()[0];
+      onFormSubmit({ range: sheet.getRange(r, 1, 1, sheet.getLastColumn()), values: rowValues });
+    }
   }
 }

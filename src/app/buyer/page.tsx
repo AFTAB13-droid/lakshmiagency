@@ -30,7 +30,7 @@ import StatCard from "@/components/common/StatCard";
 export default function BuyerDashboardPage() {
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"ALL" | "READY" | "FILLED" | "PAID">("ALL");
+  const [activeTab, setActiveTab] = useState<"ALL" | "READY" | "FILLED">("ALL");
   const [search, setSearch] = useState("");
 
   // Modal States
@@ -77,7 +77,7 @@ export default function BuyerDashboardPage() {
     return `${baseUrl}?${params.toString()}`;
   };
 
-  // Tab Filtering
+  // Tab Filtering (Workflow strictly focuses on: Order -> Review Holding -> Refund Form Filled)
   const filteredOrders = useMemo(() => {
     return orders.filter((o) => {
       const q = search.toLowerCase();
@@ -92,10 +92,7 @@ export default function BuyerDashboardPage() {
         return o.status === "ORDER_FILLED" || o.status === "HOLDING_PERIOD";
       }
       if (activeTab === "FILLED") {
-        return o.status === "REFUND_FORM_FILLED";
-      }
-      if (activeTab === "PAID") {
-        return o.status === "APPROVED_AND_PAID";
+        return o.status === "REFUND_FORM_FILLED" || o.status === "APPROVED_AND_PAID";
       }
       return true;
     });
@@ -103,8 +100,7 @@ export default function BuyerDashboardPage() {
 
   // Counts for tabs
   const readyCount = orders.filter((o) => o.status === "ORDER_FILLED" || o.status === "HOLDING_PERIOD").length;
-  const filledCount = orders.filter((o) => o.status === "REFUND_FORM_FILLED").length;
-  const paidCount = orders.filter((o) => o.status === "APPROVED_AND_PAID").length;
+  const filledCount = orders.filter((o) => o.status === "REFUND_FORM_FILLED" || o.status === "APPROVED_AND_PAID").length;
 
   // Handle manual order check & auto-claim
   const handleCheckManualOrder = async (e: React.FormEvent) => {
@@ -194,8 +190,8 @@ export default function BuyerDashboardPage() {
         </div>
       </div>
 
-      {/* Upgraded Dynamic Stat Cards Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6">
+      {/* Upgraded Dynamic Stat Cards Grid (Focused strictly on Orders -> Holding -> Refund Form Filled) */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
         <StatCard
           label="Total Orders Placed"
           value={orders.length}
@@ -218,19 +214,10 @@ export default function BuyerDashboardPage() {
           label="Refund Claims Submitted"
           value={filledCount}
           icon="refund"
-          colorScheme="blue"
-          subtext="Google Refund Form Filled"
-          trend="Awaiting UTR"
-          onClick={() => setActiveTab("FILLED")}
-        />
-        <StatCard
-          label="Disbursed & Paid"
-          value={paidCount}
-          icon="check-circle"
           colorScheme="emerald"
-          subtext="Settled to UPI / Bank"
-          trend="Completed"
-          onClick={() => setActiveTab("PAID")}
+          subtext="Google Refund Form Logged"
+          trend="Claim Active"
+          onClick={() => setActiveTab("FILLED")}
         />
       </div>
 
@@ -277,17 +264,6 @@ export default function BuyerDashboardPage() {
             }`}
           >
             Refund Forms Submitted ({filledCount})
-          </button>
-
-          <button
-            onClick={() => setActiveTab("PAID")}
-            className={`px-3.5 py-2 rounded-xl text-xs font-bold transition-all whitespace-nowrap ${
-              activeTab === "PAID"
-                ? "bg-white text-plum-900 shadow-sm border border-plum-200"
-                : "text-gray-600 hover:text-plum-900"
-            }`}
-          >
-            Paid ({paidCount})
           </button>
         </div>
 
@@ -355,35 +331,33 @@ export default function BuyerDashboardPage() {
                   <div>
                     <span
                       className={`inline-block px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider ${
-                        order.status === "APPROVED_AND_PAID"
+                        isRefundSubmitted
                           ? "bg-emerald-100 text-emerald-800 border border-emerald-200 shadow-2xs"
                           : order.status === "REJECTED"
                           ? "bg-red-100 text-red-800 border border-red-200"
-                          : order.status === "REFUND_FORM_FILLED"
-                          ? "bg-blue-100 text-blue-800 border border-blue-200 shadow-2xs animate-pulse"
                           : "bg-amber-100 text-amber-800 border border-amber-200"
                       }`}
                     >
-                      {order.status.replace(/_/g, " ")}
+                      {isRefundSubmitted
+                        ? "REFUND FORM SUBMITTED"
+                        : order.status === "REJECTED"
+                        ? "REJECTED"
+                        : "AWAITING REVIEW"}
                     </span>
                   </div>
                 </div>
 
-                {/* 4-Step Stepper */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 my-4">
+                {/* 3-Step Agency Workflow Stepper */}
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 my-4">
                   {[
-                    { label: "1. Order Form", active: true },
+                    { label: "1. Order Form Filled", active: true },
                     {
-                      label: "2. Holding Period",
+                      label: "2. Holding Period (4–5 Days)",
                       active: ["HOLDING_PERIOD", "REFUND_FORM_FILLED", "APPROVED_AND_PAID"].includes(order.status),
                     },
                     {
-                      label: "3. Refund Form",
-                      active: ["REFUND_FORM_FILLED", "APPROVED_AND_PAID"].includes(order.status),
-                    },
-                    {
-                      label: "4. Payout Disbursed",
-                      active: order.status === "APPROVED_AND_PAID",
+                      label: "3. Refund Form Submitted",
+                      active: isRefundSubmitted,
                     },
                   ].map((step) => (
                     <div
@@ -406,13 +380,9 @@ export default function BuyerDashboardPage() {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-plum-50/50 p-3.5 rounded-2xl mt-4 border border-plum-100/60">
                   <div className="flex items-center gap-2.5 text-xs">
                     <Clock className="w-4 h-4 text-plum-700 shrink-0" />
-                    {order.status === "APPROVED_AND_PAID" ? (
+                    {isRefundSubmitted ? (
                       <span className="text-emerald-700 font-bold">
-                        Refund processed! UTR: <strong className="font-mono">{order.transactionReference || "Direct Bank Transfer"}</strong>
-                      </span>
-                    ) : order.status === "REFUND_FORM_FILLED" ? (
-                      <span className="text-blue-700 font-bold">
-                        ✓ Refund Form Submitted! Payout is in progress within 20–25 working days.
+                        ✓ Refund Form Submitted! Agency will process reimbursement directly to your UPI/Bank within 20–25 working days.
                       </span>
                     ) : (
                       <span className="text-plum-900 font-semibold">
@@ -429,15 +399,15 @@ export default function BuyerDashboardPage() {
 
                   {/* Actions depending on status */}
                   <div className="flex items-center gap-2 w-full sm:w-auto justify-end">
-                    {order.status === "REFUND_FORM_FILLED" ? (
+                    {isRefundSubmitted ? (
                       <button
                         onClick={() => setViewRefundDetailsOrder(order)}
-                        className="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
+                        className="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors flex items-center gap-1.5"
                       >
-                        <CheckCircle2 className="w-3.5 h-3.5 text-blue-200" />
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-200" />
                         View Refund Submission
                       </button>
-                    ) : order.status !== "APPROVED_AND_PAID" && (
+                    ) : (
                       <button
                         onClick={() => setSelectedOrderForRefund(order)}
                         className="px-4 py-2 rounded-xl bg-gradient-to-r from-lotus-600 to-plum-700 hover:from-lotus-700 hover:to-plum-800 text-white text-xs font-bold shadow-md shadow-plum-900/20 hover:scale-105 active:scale-95 transition-all flex items-center gap-1.5"

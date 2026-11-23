@@ -28,13 +28,13 @@ export async function POST(req: NextRequest) {
       return "";
     };
 
-    const orderId = findField(["order id", "order no", "orderid", "marketplace order"]);
-    const productCode = findField(["product code", "deal code", "asin", "product id", "code"]);
+    const orderId = findField(["order id", "order no", "orderid", "marketplace order", "order"]);
+    const productCode = findField(["product code", "deal code", "asin", "product id", "code", "item code"]);
     const mediatorCode = findField(["mediator", "agent", "lax", "premium user", "referral"]);
-    const buyerName = findField(["name", "buyer name", "customer name"]) || "Valued Buyer";
-    const buyerPhone = findField(["phone", "whatsapp", "mobile", "contact"]);
-    const buyerEmail = findField(["email", "mail address"]);
-    const screenshot = findField(["screenshot", "image", "drive", "file", "receipt", "proof"]);
+    const buyerName = findField(["name", "buyer name", "customer name", "your name"]) || "Valued Buyer";
+    const buyerPhone = findField(["phone", "whatsapp", "mobile", "contact", "cell", "number"]) || "N/A";
+    const buyerEmail = findField(["email", "mail address", "email id"]);
+    const screenshot = findField(["screenshot", "image", "drive", "file", "receipt", "proof", "upload"]);
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required in form submission" }, { status: 400 });
