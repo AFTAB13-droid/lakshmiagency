@@ -325,7 +325,9 @@ export default function BuyerDashboardPage() {
 
                   <div>
                     <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Refund Payout Due</div>
-                    <div className="font-black text-plum-950 text-base">₹{order.payoutAmount || order.amount}</div>
+                    <div className="font-black text-plum-950 text-base">
+                      {isRefundSubmitted ? `₹${order.payoutAmount || order.amount || 0}` : "—"}
+                    </div>
                   </div>
 
                   <div>

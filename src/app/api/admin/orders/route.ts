@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { orderId, status, transactionReference, rejectionReason } = await req.json();
+    const { orderId, status, transactionReference, rejectionReason, payoutAmount } = await req.json();
     if (!orderId || !status) {
       return NextResponse.json({ error: "Order ID and status required" }, { status: 400 });
     }
@@ -40,6 +40,10 @@ export async function PATCH(req: NextRequest) {
     const order = await Order.findById(orderId);
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (payoutAmount !== undefined && payoutAmount !== null) {
+      order.payoutAmount = Number(payoutAmount);
     }
 
     const previousStatus = order.status;

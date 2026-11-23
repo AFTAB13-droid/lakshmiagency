@@ -53,6 +53,17 @@ export async function POST(req: NextRequest) {
     order.status = OrderStatus.REFUND_FORM_FILLED;
     order.refundFormSubmittedAt = now;
     order.expectedPayoutDate = expectedPayout;
+    const refundAmountRaw = findField(["refund amount", "refund", "amount", "price", "payout", "cost", "total"]);
+    if (refundAmountRaw) {
+      const parsedAmount = parseFloat(refundAmountRaw.replace(/[^0-9.]/g, ""));
+      if (!isNaN(parsedAmount) && parsedAmount > 0) {
+        order.payoutAmount = parsedAmount;
+        if (!order.amount || order.amount === 0) {
+          order.amount = parsedAmount;
+        }
+      }
+    }
+
     if (reviewProof) {
       order.reviewScreenshotUrl = reviewProof;
     }

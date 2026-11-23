@@ -276,8 +276,11 @@ export default function AdminOrdersPage() {
 
                       {/* Refund Amount */}
                       <td className="p-4 sm:p-5">
-                        <div className="font-black text-plum-950 text-sm">₹{o.payoutAmount || o.amount}</div>
-                        <div className="text-[10px] text-gray-400">Paid from Google Form</div>
+                        {o.status === "ORDER_FILLED" ? (
+                          <span className="font-black text-gray-400 text-sm">—</span>
+                        ) : (
+                          <div className="font-black text-plum-950 text-sm">₹{o.payoutAmount || o.amount || 0}</div>
+                        )}
                       </td>
 
                       {/* Agent */}
@@ -393,7 +396,9 @@ export default function AdminOrdersPage() {
                     Refund / Payout Due
                   </span>
                   <span className="font-black text-xl text-gold-300">
-                    ₹{selectedOrder.payoutAmount || selectedOrder.amount}
+                    {selectedOrder.status === "ORDER_FILLED"
+                      ? "—"
+                      : `₹${selectedOrder.payoutAmount || selectedOrder.amount || 0}`}
                   </span>
                 </div>
               </div>
