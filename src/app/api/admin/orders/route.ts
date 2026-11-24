@@ -31,7 +31,7 @@ export async function PATCH(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { orderId, status, transactionReference, rejectionReason, payoutAmount } = await req.json();
+    const { orderId, status, transactionReference, rejectionReason, payoutAmount, brandName, productName } = await req.json();
     if (!orderId || !status) {
       return NextResponse.json({ error: "Order ID and status required" }, { status: 400 });
     }
@@ -44,6 +44,12 @@ export async function PATCH(req: NextRequest) {
 
     if (payoutAmount !== undefined && payoutAmount !== null) {
       order.payoutAmount = Number(payoutAmount);
+    }
+    if (brandName) {
+      order.brandName = brandName.trim();
+    }
+    if (productName) {
+      order.productName = productName.trim();
     }
 
     const previousStatus = order.status;

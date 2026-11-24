@@ -16,6 +16,7 @@ import {
   MessageCircle,
   Package,
   Trash2,
+  Pencil,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import CustomDropdown from "@/components/common/CustomDropdown";
@@ -104,6 +105,33 @@ export default function AdminOrdersPage() {
       }
     } catch (err) {
       toast.error("Network error deleting order");
+    }
+  };
+
+  const handleEditOrderBrand = async (orderId: string, currentBrand: string) => {
+    const newBrand = window.prompt("Enter correct Brand Name for this order:", currentBrand);
+    if (!newBrand || newBrand.trim() === currentBrand) return;
+
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          status: selectedOrder.status,
+          brandName: newBrand.trim(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Brand updated to "${newBrand.trim()}"`);
+        setSelectedOrder((prev: any) => ({ ...prev, brandName: newBrand.trim() }));
+        fetchOrders();
+      } else {
+        toast.error(data.error || "Failed to update brand");
+      }
+    } catch {
+      toast.error("Network error updating brand");
     }
   };
 
@@ -430,8 +458,19 @@ export default function AdminOrdersPage() {
                   <h4 className="font-bold text-sm text-white mt-0.5">
                     {selectedOrder.productName || "Product"}
                   </h4>
-                  <p className="text-[11px] text-white/80">
-                    Brand: <strong>{selectedOrder.brandName || "General"}</strong> • Platform: <strong>{selectedOrder.marketplace || "Amazon"}</strong>
+                  <p className="text-[11px] text-white/80 flex items-center gap-1.5 mt-0.5">
+                    <span>Brand:</span>
+                    <strong className="text-white">{selectedOrder.brandName || "General"}</strong>
+                    <button
+                      type="button"
+                      onClick={() => handleEditOrderBrand(selectedOrder._id, selectedOrder.brandName || "")}
+                      className="p-1 rounded-lg bg-white/10 hover:bg-white/20 text-gold-300 transition-colors inline-flex items-center"
+                      title="Edit Brand Name"
+                    >
+                      <Pencil className="w-3 h-3" />
+                    </button>
+                    <span>• Platform:</span>
+                    <strong className="text-white">{selectedOrder.marketplace || "Amazon"}</strong>
                   </p>
                 </div>
                 <div className="text-left sm:text-right">

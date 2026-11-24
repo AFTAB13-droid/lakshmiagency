@@ -4,6 +4,7 @@ import { Order, OrderStatus } from "@/models/Order";
 import { Deal } from "@/models/Deal";
 import { User, UserRole } from "@/models/User";
 import { Notification } from "@/models/Notification";
+import { Brand } from "@/models/Brand";
 
 const EXPECTED_SECRET = process.env.GOOGLE_WEBHOOK_SECRET || "lakshmi_agency_secure_webhook_token_2026";
 
@@ -63,6 +64,23 @@ export async function POST(req: NextRequest) {
       "item",
       "deal",
     ]);
+
+    const brandNameInput = findField(
+      [
+        "brand name",
+        "brand",
+        "product brand",
+        "brand / seller",
+        "brand / company",
+        "brand / manufacturer",
+        "seller name",
+        "seller",
+        "company",
+        "manufacturer",
+        "make",
+      ],
+      ["order", "id", "asin", "sku", "phone", "email", "link", "url", "proof", "screenshot"]
+    );
 
     const slotTypeInput = findField([
       "slot type",
@@ -272,6 +290,74 @@ export async function POST(req: NextRequest) {
     deadline.setDate(deadline.getDate() + 20);
 
     // =========================================================================
+    // 4.5. Multi-Source Brand Resolution Engine
+    // =========================================================================
+    let resolvedBrandName = "";
+
+    // Source 1: Direct from Matched Deal (highest confidence)
+    if (deal?.brandName && deal.brandName.trim().length > 0) {
+      resolvedBrandName = deal.brandName.trim();
+    }
+
+    // Source 2: Direct from Google Form "Brand" Field Submission
+    if (!resolvedBrandName && brandNameInput && brandNameInput.trim().length > 0) {
+      resolvedBrandName = brandNameInput.trim();
+    }
+
+    // Source 3: Match against Registered Brands Catalog in Database
+    const allDbBrands = await Brand.find({ isActive: true });
+    if (!resolvedBrandName && (productNameInput || productCode)) {
+      const fullQuery = `${productNameInput} ${productCode}`.toLowerCase();
+      for (const b of allDbBrands) {
+        if (fullQuery.includes(b.name.toLowerCase())) {
+          resolvedBrandName = b.name;
+          break;
+        }
+      }
+    }
+
+    // Source 4: Parse Brand from E-Commerce Product Title (Amazon / Flipkart format)
+    // Standard marketplace titles: "[BrandName] [Item Description...]"
+    if (!resolvedBrandName && productNameInput) {
+      const cleanTitle = productNameInput.trim().replace(/^[^a-zA-Z0-9]+/, "");
+      const words = cleanTitle.split(/\s+/);
+      if (words.length > 0) {
+        const firstWord = words[0].replace(/[^a-zA-Z0-9&.-]/g, "");
+        const secondWord = words.length > 1 ? words[1].replace(/[^a-zA-Z0-9&.-]/g, "") : "";
+        const stopWords = new Set(["the", "a", "an", "new", "all", "best", "hot", "pack", "set", "original", "premium", "top", "latest"]);
+
+        if (firstWord && firstWord.length >= 2) {
+          const twoWord = `${firstWord} ${secondWord}`.trim();
+          const matchTwoWord = allDbBrands.find((b) => b.name.toLowerCase() === twoWord.toLowerCase());
+          if (matchTwoWord) {
+            resolvedBrandName = matchTwoWord.name;
+          } else if (!stopWords.has(firstWord.toLowerCase())) {
+            resolvedBrandName = firstWord;
+          } else if (secondWord && !stopWords.has(secondWord.toLowerCase())) {
+            resolvedBrandName = `${firstWord} ${secondWord}`;
+          }
+        }
+      }
+    }
+
+    // Source 5: Clean fallback if completely unresolved
+    if (!resolvedBrandName || resolvedBrandName.toLowerCase() === "general brand") {
+      resolvedBrandName = "General Brand";
+    }
+
+    // Auto-register newly discovered brand if valid and not existing
+    if (resolvedBrandName && resolvedBrandName !== "General Brand") {
+      try {
+        const escapedBrand = resolvedBrandName.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        await Brand.findOneAndUpdate(
+          { name: { $regex: new RegExp(`^${escapedBrand}$`, "i") } },
+          { $setOnInsert: { name: resolvedBrandName, isActive: true } },
+          { upsert: true }
+        );
+      } catch (err) {}
+    }
+
+    // =========================================================================
     // 5. Create Order Record
     // =========================================================================
     const orderStatus = isOverbooked ? OrderStatus.REJECTED : OrderStatus.ORDER_FILLED;
@@ -284,7 +370,7 @@ export async function POST(req: NextRequest) {
       dealId: deal?._id,
       productCode: deal?.productCode || (productCode ? productCode.toUpperCase() : "GENERAL"),
       productName: deal?.productName || productNameInput || "Marketplace Product",
-      brandName: deal?.brandName || "General Brand",
+      brandName: resolvedBrandName,
       marketplace: deal?.marketplace || "Amazon",
       amount: deal?.price || 0,
       payoutAmount: deal?.lessAmount || 0,
