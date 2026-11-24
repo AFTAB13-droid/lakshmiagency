@@ -1,4 +1,5 @@
 import React from "react";
+import Link from "next/link";
 import AdminSidebar from "@/components/layout/AdminSidebar";
 import NotificationDrawer from "@/components/layout/NotificationDrawer";
 import SidebarToggleBtn from "@/components/layout/SidebarToggleBtn";
@@ -37,15 +38,23 @@ export default async function AdminLayout({
             <div className="flex items-center gap-3 sm:gap-4">
               <NotificationDrawer />
               <div className="h-6 w-px bg-gray-200" />
-              <div className="flex items-center gap-2.5">
-                <div className="w-8 h-8 rounded-full bg-plum-100 text-plum-800 font-bold flex items-center justify-center text-xs shadow-xs">
+              <Link
+                href="/admin/security"
+                className="flex items-center gap-2.5 p-1 -m-1 rounded-2xl hover:bg-plum-50/80 transition-colors group cursor-pointer"
+                title="Change Admin Password & Security"
+              >
+                <div className="w-8 h-8 rounded-full bg-plum-100 text-plum-800 font-bold flex items-center justify-center text-xs shadow-xs group-hover:scale-105 transition-transform">
                   A
                 </div>
                 <div className="hidden sm:block text-left">
-                  <div className="text-xs font-bold text-plum-900">{session.user.name}</div>
-                  <div className="text-[10px] text-gray-400">Master Administrator</div>
+                  <div className="text-xs font-bold text-plum-900 group-hover:text-plum-950 flex items-center gap-1">
+                    {session.user.name}
+                  </div>
+                  <div className="text-[10px] text-gray-400 group-hover:text-plum-600 transition-colors">
+                    Master Administrator
+                  </div>
                 </div>
-              </div>
+              </Link>
             </div>
           </header>
 

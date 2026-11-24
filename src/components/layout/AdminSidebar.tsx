@@ -18,6 +18,7 @@ import {
   Shield,
   Sparkles,
   ChevronRight,
+  KeyRound,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
@@ -58,6 +59,12 @@ const navItems = [
     subLabel: "Pitch templates & form webhooks",
     href: "/admin/settings",
     icon: Settings,
+  },
+  {
+    label: "Security & Password",
+    subLabel: "Change admin login credentials",
+    href: "/admin/security",
+    icon: KeyRound,
   },
 ];
 
