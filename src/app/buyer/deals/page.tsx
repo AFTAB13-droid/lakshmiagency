@@ -426,54 +426,58 @@ export default function BuyerDealsPage() {
                       </div>
                     )}
 
-                    {/* Pricing */}
-                    <div className="p-2.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70 flex items-center justify-between">
-                      <div>
-                        <span className="text-[9px] text-gray-400 font-bold uppercase block">Deal Price</span>
-                        <span className="text-base font-black text-plum-950">₹{deal.price}</span>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-[9px] text-gray-400 font-bold uppercase block">Your Cashback</span>
-                        <span className="text-base font-black text-emerald-700">
-                          {deal.pricingType === "LESS"
-                            ? `-₹${deal.lessAmount || 0}`
-                            : deal.pricingType === "COMMISSION"
-                            ? `+₹${deal.commissionAmount || 0}`
-                            : `₹${deal.price}`}
-                        </span>
-                      </div>
-                    </div>
+                    {/* Pricing & Slots Meter - Hidden for No Investment Deal */}
+                    {!isNoInvestment && (
+                      <>
+                        <div className="p-2.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70 flex items-center justify-between">
+                          <div>
+                            <span className="text-[9px] text-gray-400 font-bold uppercase block">Deal Price</span>
+                            <span className="text-base font-black text-plum-950">₹{deal.price}</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[9px] text-gray-400 font-bold uppercase block">Your Cashback</span>
+                            <span className="text-base font-black text-emerald-700">
+                              {deal.pricingType === "LESS"
+                                ? `-₹${deal.lessAmount || 0}`
+                                : deal.pricingType === "COMMISSION"
+                                ? `+₹${deal.commissionAmount || 0}`
+                                : `₹${deal.price}`}
+                            </span>
+                          </div>
+                        </div>
 
-                    {/* Granular Feedback Slots Meter */}
-                    <div className="grid grid-cols-2 gap-2 text-[10px]">
-                      {/* Rating Slots */}
-                      <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-gray-700 flex items-center gap-1">
-                            <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
-                            Rating
-                          </span>
-                          <span className="font-mono font-black text-gold-800">{ratingRem}/{ratingTotal}</span>
-                        </div>
-                        <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-gold-400 to-amber-500" style={{ width: `${ratingPercent}%` }} />
-                        </div>
-                      </div>
+                        {/* Granular Feedback Slots Meter */}
+                        <div className="grid grid-cols-2 gap-2 text-[10px]">
+                          {/* Rating Slots */}
+                          <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-gray-700 flex items-center gap-1">
+                                <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
+                                Rating
+                              </span>
+                              <span className="font-mono font-black text-gold-800">{ratingRem}/{ratingTotal}</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-gold-400 to-amber-500" style={{ width: `${ratingPercent}%` }} />
+                            </div>
+                          </div>
 
-                      {/* Review Slots */}
-                      <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
-                        <div className="flex justify-between items-center">
-                          <span className="font-bold text-gray-700 flex items-center gap-1">
-                            <MessageSquare className="w-3 h-3 text-lotus-500" />
-                            Review
-                          </span>
-                          <span className="font-mono font-black text-lotus-800">{reviewRem}/{reviewTotal}</span>
+                          {/* Review Slots */}
+                          <div className="p-2 rounded-xl bg-gray-50 border border-gray-100">
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-gray-700 flex items-center gap-1">
+                                <MessageSquare className="w-3 h-3 text-lotus-500" />
+                                Review
+                              </span>
+                              <span className="font-mono font-black text-lotus-800">{reviewRem}/{reviewTotal}</span>
+                            </div>
+                            <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
+                              <div className="h-full bg-gradient-to-r from-lotus-500 to-pink-500" style={{ width: `${reviewPercent}%` }} />
+                            </div>
+                          </div>
                         </div>
-                        <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
-                          <div className="h-full bg-gradient-to-r from-lotus-500 to-pink-500" style={{ width: `${reviewPercent}%` }} />
-                        </div>
-                      </div>
-                    </div>
+                      </>
+                    )}
                   </div>
                 </div>
 
@@ -610,12 +614,14 @@ export default function BuyerDealsPage() {
                     <h3 className="font-bold text-plum-950 text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-lotus-700 transition-colors">
                       {deal.productName}
                     </h3>
-                    <div className="flex items-center gap-3 mt-1 text-xs">
-                      <span className="text-gray-400">Price: <strong className="text-plum-950 font-black">₹{deal.price}</strong></span>
-                      <span className="text-emerald-700 font-bold">
-                        Cashback: {deal.pricingType === "LESS" ? `-₹${deal.lessAmount}` : `₹${deal.price}`}
-                      </span>
-                    </div>
+                    {!isNoInvestment && (
+                      <div className="flex items-center gap-3 mt-1 text-xs">
+                        <span className="text-gray-400">Price: <strong className="text-plum-950 font-black">₹{deal.price}</strong></span>
+                        <span className="text-emerald-700 font-bold">
+                          Cashback: {deal.pricingType === "LESS" ? `-₹${deal.lessAmount}` : `₹${deal.price}`}
+                        </span>
+                      </div>
+                    )}
                     {deal.description && (
                       <div className="mt-2 p-2.5 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 border border-emerald-200 text-emerald-950 text-xs shadow-2xs space-y-0.5">
                         <div className="flex items-center gap-1.5 font-black text-[10px] text-emerald-800 uppercase tracking-wider">
@@ -630,17 +636,19 @@ export default function BuyerDealsPage() {
                   </div>
                 </div>
 
-                {/* Slots info */}
-                <div className="hidden lg:flex items-center gap-4 text-xs">
-                  <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
-                    <span className="text-[10px] text-gray-400 block">Rating Slots</span>
-                    <strong className="text-gold-700 font-mono">{ratingRem}/{ratingTotal}</strong>
+                {/* Slots info - Hidden for No Investment Deal */}
+                {!isNoInvestment && (
+                  <div className="hidden lg:flex items-center gap-4 text-xs">
+                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
+                      <span className="text-[10px] text-gray-400 block">Rating Slots</span>
+                      <strong className="text-gold-700 font-mono">{ratingRem}/{ratingTotal}</strong>
+                    </div>
+                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
+                      <span className="text-[10px] text-gray-400 block">Review Slots</span>
+                      <strong className="text-lotus-700 font-mono">{reviewRem}/{reviewTotal}</strong>
+                    </div>
                   </div>
-                  <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
-                    <span className="text-[10px] text-gray-400 block">Review Slots</span>
-                    <strong className="text-lotus-700 font-mono">{reviewRem}/{reviewTotal}</strong>
-                  </div>
-                </div>
+                )}
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">

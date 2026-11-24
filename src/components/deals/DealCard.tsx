@@ -237,34 +237,36 @@ export default function DealCard({
                 </span>
               </div>
 
-              {/* Price Strip */}
-              <div className="flex items-center gap-4 bg-plum-50/60 px-3.5 py-1.5 rounded-2xl border border-plum-100">
-                <div>
-                  <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">
-                    Product Price
-                  </span>
-                  <span className="text-sm sm:text-base font-black text-plum-950">
-                    ₹{deal.price}
-                  </span>
+              {/* Price Strip - Hidden for No Investment Deal */}
+              {!isNoInvestment && (
+                <div className="flex items-center gap-4 bg-plum-50/60 px-3.5 py-1.5 rounded-2xl border border-plum-100">
+                  <div>
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">
+                      Product Price
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-plum-950">
+                      ₹{deal.price}
+                    </span>
+                  </div>
+                  <div className="w-px h-6 bg-plum-200" />
+                  <div>
+                    <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">
+                      {deal.pricingType === "LESS"
+                        ? "Deduction"
+                        : deal.pricingType === "COMMISSION"
+                        ? "Mediator Comm"
+                        : "Cashback"}
+                    </span>
+                    <span className="text-sm sm:text-base font-black text-emerald-700">
+                      {deal.pricingType === "LESS"
+                        ? `-₹${deal.lessAmount || 0}`
+                        : deal.pricingType === "COMMISSION"
+                        ? `+₹${deal.commissionAmount || 0}`
+                        : "₹" + deal.price}
+                    </span>
+                  </div>
                 </div>
-                <div className="w-px h-6 bg-plum-200" />
-                <div>
-                  <span className="text-[9px] text-gray-500 font-bold uppercase tracking-wider block">
-                    {deal.pricingType === "LESS"
-                      ? "Deduction"
-                      : deal.pricingType === "COMMISSION"
-                      ? "Mediator Comm"
-                      : "Cashback"}
-                  </span>
-                  <span className="text-sm sm:text-base font-black text-emerald-700">
-                    {deal.pricingType === "LESS"
-                      ? `-₹${deal.lessAmount || 0}`
-                      : deal.pricingType === "COMMISSION"
-                      ? `+₹${deal.commissionAmount || 0}`
-                      : "₹" + deal.price}
-                  </span>
-                </div>
-              </div>
+              )}
             </div>
 
             <h3 className="font-bold text-plum-950 text-base sm:text-lg mt-2 group-hover:text-lotus-700 transition-colors leading-snug">
@@ -284,58 +286,60 @@ export default function DealCard({
             )}
           </div>
 
-          {/* Granular Feedback Slots Meter */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            {/* Rating Slot Meter */}
-            <div className="p-3.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                  <Star className="w-3.5 h-3.5 text-gold-500 fill-gold-500" />
-                  Rating Slots
-                </span>
-                <span className="text-xs font-mono font-black text-gold-800">
-                  {ratingRem} / {ratingTotal}
+          {/* Granular Feedback Slots Meter - Hidden for No Investment Deal */}
+          {!isNoInvestment && (
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              {/* Rating Slot Meter */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <Star className="w-3.5 h-3.5 text-gold-500 fill-gold-500" />
+                    Rating Slots
+                  </span>
+                  <span className="text-xs font-mono font-black text-gold-800">
+                    {ratingRem} / {ratingTotal}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${ratingPercent}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
+                  />
+                </div>
+                <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
+                  {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
                 </span>
               </div>
-              <div className="w-full h-2 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${ratingPercent}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
-                />
-              </div>
-              <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
-                {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
-              </span>
-            </div>
 
-            {/* Review Slot Meter */}
-            <div className="p-3.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
-                  <MessageSquare className="w-3.5 h-3.5 text-lotus-500" />
-                  Review Slots
-                </span>
-                <span className="text-xs font-mono font-black text-lotus-800">
-                  {reviewRem} / {reviewTotal}
+              {/* Review Slot Meter */}
+              <div className="p-3.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-gray-800 flex items-center gap-1.5">
+                    <MessageSquare className="w-3.5 h-3.5 text-lotus-500" />
+                    Review Slots
+                  </span>
+                  <span className="text-xs font-mono font-black text-lotus-800">
+                    {reviewRem} / {reviewTotal}
+                  </span>
+                </div>
+                <div className="w-full h-2 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${reviewPercent}%` }}
+                    transition={{ duration: 0.6, ease: "easeOut" }}
+                    className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
+                  />
+                </div>
+                <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
+                  {deal.commissionAmount > 0
+                    ? `Comm: ₹${deal.commissionAmount}`
+                    : "Detailed Pic Review"}
                 </span>
               </div>
-              <div className="w-full h-2 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${reviewPercent}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
-                />
-              </div>
-              <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
-                {deal.commissionAmount > 0
-                  ? `Comm: ₹${deal.commissionAmount}`
-                  : "Detailed Pic Review"}
-              </span>
             </div>
-          </div>
+          )}
 
           {/* Action Buttons Hub */}
           <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
@@ -531,27 +535,36 @@ export default function DealCard({
           {/* Bottom Image Overlay Badges */}
           <div className="absolute bottom-3 left-3 right-3 flex items-end justify-between gap-2 z-10">
             {/* Brand Pill */}
-            <span className="px-3 py-1 rounded-xl bg-plum-950/80 backdrop-blur-md text-gold-300 text-[11px] font-black uppercase tracking-widest border border-gold-400/30 shadow-md">
-              {deal.brandName}
-            </span>
+            {!isNoInvestment ? (
+              <span className="px-3 py-1 rounded-xl bg-plum-950/80 backdrop-blur-md text-gold-300 text-[11px] font-black uppercase tracking-widest border border-gold-400/30 shadow-md">
+                {deal.brandName}
+              </span>
+            ) : (
+              <span className="px-3 py-1 rounded-xl bg-emerald-950/85 backdrop-blur-md text-emerald-300 text-[11px] font-black uppercase tracking-wider border border-emerald-400/40 shadow-md flex items-center gap-1">
+                <Sparkles className="w-3 h-3 text-emerald-400" />
+                Zero Investment
+              </span>
+            )}
 
             {/* Slots Status Pill */}
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide shadow-md backdrop-blur-md flex items-center gap-1.5 ${
-                isFull
-                  ? "bg-red-950/85 text-red-200 border border-red-500/40"
-                  : "bg-emerald-950/85 text-emerald-200 border border-emerald-400/40"
-              }`}
-            >
+            {!isNoInvestment && (
               <span
-                className={`w-1.5 h-1.5 rounded-full ${
-                  isFull ? "bg-red-400" : "bg-emerald-400 animate-pulse"
+                className={`px-3 py-1 rounded-full text-[10px] font-black tracking-wide shadow-md backdrop-blur-md flex items-center gap-1.5 ${
+                  isFull
+                    ? "bg-red-950/85 text-red-200 border border-red-500/40"
+                    : "bg-emerald-950/85 text-emerald-200 border border-emerald-400/40"
                 }`}
-              />
-              {isFull
-                ? "Slots Full"
-                : `${deal.remainingSlots} / ${deal.totalSlots} Slots`}
-            </span>
+              >
+                <span
+                  className={`w-1.5 h-1.5 rounded-full ${
+                    isFull ? "bg-red-400" : "bg-emerald-400 animate-pulse"
+                  }`}
+                />
+                {isFull
+                  ? "Slots Full"
+                  : `${deal.remainingSlots} / ${deal.totalSlots} Slots`}
+              </span>
+            )}
           </div>
         </div>
 
@@ -584,85 +597,89 @@ export default function DealCard({
             </div>
           )}
 
-          {/* Pricing Highlight Strip */}
-          <div className="p-3.5 rounded-2xl bg-gradient-to-r from-plum-50/70 via-lotus-50/40 to-gold-50/30 border border-plum-100 flex items-center justify-between">
-            <div>
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
-                Product Price
-              </span>
-              <span className="text-lg font-black text-plum-950">₹{deal.price}</span>
-            </div>
+          {/* Pricing Highlight Strip & Slots Meters - Hidden for No Investment Deals */}
+          {!isNoInvestment && (
+            <>
+              <div className="p-3.5 rounded-2xl bg-gradient-to-r from-plum-50/70 via-lotus-50/40 to-gold-50/30 border border-plum-100 flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
+                    Product Price
+                  </span>
+                  <span className="text-lg font-black text-plum-950">₹{deal.price}</span>
+                </div>
 
-            <div className="text-right">
-              <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
-                {deal.pricingType === "LESS"
-                  ? "Deduction"
-                  : deal.pricingType === "COMMISSION"
-                  ? "Mediator Comm"
-                  : "Cashback"}
-              </span>
-              <span className="text-base font-black text-emerald-700">
-                {deal.pricingType === "LESS"
-                  ? `-₹${deal.lessAmount || 0}`
-                  : deal.pricingType === "COMMISSION"
-                  ? `+₹${deal.commissionAmount || 0}`
-                  : "₹" + deal.price}
-              </span>
-            </div>
-          </div>
+                <div className="text-right">
+                  <span className="text-[10px] text-gray-500 font-bold uppercase tracking-wider block">
+                    {deal.pricingType === "LESS"
+                      ? "Deduction"
+                      : deal.pricingType === "COMMISSION"
+                      ? "Mediator Comm"
+                      : "Cashback"}
+                  </span>
+                  <span className="text-base font-black text-emerald-700">
+                    {deal.pricingType === "LESS"
+                      ? `-₹${deal.lessAmount || 0}`
+                      : deal.pricingType === "COMMISSION"
+                      ? `+₹${deal.commissionAmount || 0}`
+                      : "₹" + deal.price}
+                  </span>
+                </div>
+              </div>
 
-          {/* Granular Slots Progress Meters */}
-          <div className="grid grid-cols-2 gap-2.5">
-            {/* Rating Slot Meter */}
-            <div className="p-3 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
-                  <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
-                  Rating
-                </span>
-                <span className="text-[10px] font-mono font-black text-gold-800">
-                  {ratingRem}/{ratingTotal}
-                </span>
-              </div>
-              <div className="w-full h-1.5 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${ratingPercent}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
-                />
-              </div>
-              <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
-                {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
-              </span>
-            </div>
+              {/* Granular Slots Progress Meters */}
+              <div className="grid grid-cols-2 gap-2.5">
+                {/* Rating Slot Meter */}
+                <div className="p-3 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
+                      <Star className="w-3 h-3 text-gold-500 fill-gold-500" />
+                      Rating
+                    </span>
+                    <span className="text-[10px] font-mono font-black text-gold-800">
+                      {ratingRem}/{ratingTotal}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${ratingPercent}%` }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
+                    />
+                  </div>
+                  <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
+                    {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
+                  </span>
+                </div>
 
-            {/* Review Slot Meter */}
-            <div className="p-3 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
-              <div className="flex items-center justify-between">
-                <span className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
-                  <MessageSquare className="w-3 h-3 text-lotus-500" />
-                  Review
-                </span>
-                <span className="text-[10px] font-mono font-black text-lotus-800">
-                  {reviewRem}/{reviewTotal}
-                </span>
+                {/* Review Slot Meter */}
+                <div className="p-3 rounded-2xl bg-[#FAF5F8] border border-plum-100/70">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-gray-800 flex items-center gap-1">
+                      <MessageSquare className="w-3 h-3 text-lotus-500" />
+                      Review
+                    </span>
+                    <span className="text-[10px] font-mono font-black text-lotus-800">
+                      {reviewRem}/{reviewTotal}
+                    </span>
+                  </div>
+                  <div className="w-full h-1.5 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${reviewPercent}%` }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
+                    />
+                  </div>
+                  <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
+                    {deal.commissionAmount > 0
+                      ? `Comm: ₹${deal.commissionAmount}`
+                      : "Detailed Review"}
+                  </span>
+                </div>
               </div>
-              <div className="w-full h-1.5 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
-                <motion.div
-                  initial={{ width: 0 }}
-                  animate={{ width: `${reviewPercent}%` }}
-                  transition={{ duration: 0.6, ease: "easeOut" }}
-                  className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
-                />
-              </div>
-              <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
-                {deal.commissionAmount > 0
-                  ? `Comm: ₹${deal.commissionAmount}`
-                  : "Detailed Review"}
-              </span>
-            </div>
-          </div>
+            </>
+          )}
         </div>
       </div>
 

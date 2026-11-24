@@ -43,32 +43,38 @@ export async function POST(req: NextRequest) {
     } = body;
 
     const isNoInvestment = dealType === "No Investment";
-    if (!brandName || !productName || !productCode || (price === undefined || price === null || price === "")) {
+
+    const finalBrand = isNoInvestment ? (brandName?.trim() || "Lakshmi Agency") : brandName;
+    const finalProduct = isNoInvestment ? (productName?.trim() || "No Investment Deal") : productName;
+    const finalCode = (productCode?.trim() || (isNoInvestment ? "NOINV-" + Date.now().toString().slice(-4) : "")).toUpperCase();
+    const finalPrice = isNoInvestment ? 0 : Number(price);
+
+    if (!finalBrand || !finalProduct || !finalCode || (finalPrice === undefined || finalPrice === null || isNaN(finalPrice))) {
       return NextResponse.json({ error: "Required fields missing" }, { status: 400 });
     }
 
     await connectToDatabase();
 
-    const existing = await Deal.findOne({ productCode: productCode.toUpperCase() });
+    const existing = await Deal.findOne({ productCode: finalCode });
     if (existing) {
       return NextResponse.json({ error: "Product Code already exists" }, { status: 400 });
     }
 
-    const rSlots = Number(reviewSlots) || 0;
-    const ratSlots = Number(ratingSlots) || 0;
+    const rSlots = isNoInvestment ? 9999 : (Number(reviewSlots) || 0);
+    const ratSlots = isNoInvestment ? 9999 : (Number(ratingSlots) || 0);
     const totalSlots = rSlots + ratSlots;
 
     const newDeal = await Deal.create({
-      brandName,
-      productName,
-      productCode: productCode.toUpperCase(),
-      marketplace: marketplace || "Amazon",
+      brandName: finalBrand,
+      productName: finalProduct,
+      productCode: finalCode,
+      marketplace: isNoInvestment ? (marketplace || "WhatsApp Direct") : (marketplace || "Amazon"),
       productLink: productLink || "",
-      productImage: productImage || "",
-      price: Number(price) || 0,
+      productImage: productImage || (isNoInvestment ? "/logo.jpg" : ""),
+      price: finalPrice,
       pricingType: isNoInvestment ? "FULL_REFUND" : (pricingType || "FULL_REFUND"),
-      lessAmount: Number(lessAmount) || 0,
-      commissionAmount: Number(commissionAmount) || 0,
+      lessAmount: isNoInvestment ? 0 : (Number(lessAmount) || 0),
+      commissionAmount: isNoInvestment ? 0 : (Number(commissionAmount) || 0),
       totalSlots,
       remainingSlots: totalSlots,
       reviewSlots: rSlots,

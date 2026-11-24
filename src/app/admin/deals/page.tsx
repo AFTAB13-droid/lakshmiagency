@@ -193,10 +193,28 @@ export default function AdminDealsPage() {
       const url = "/api/admin/deals";
       const isRelist = modalMode === "relist";
       const method = modalMode === "edit" || isRelist ? "PATCH" : "POST";
+      const isNoInvestment = formData.dealType === "No Investment";
+      const preparedData = { ...formData };
+      if (isNoInvestment) {
+        preparedData.productName = formData.productName?.trim() || "No Investment Deal";
+        preparedData.brandName = formData.brandName?.trim() || "Lakshmi Agency";
+        preparedData.marketplace = formData.marketplace || "WhatsApp Direct";
+        preparedData.productCode = formData.productCode?.trim() || ("NOINV-" + Date.now().toString().slice(-4));
+        preparedData.price = "0";
+        preparedData.pricingType = "FULL_REFUND";
+        preparedData.lessAmount = "0";
+        preparedData.commissionAmount = "0";
+        preparedData.reviewSlots = "9999";
+        preparedData.ratingSlots = "9999";
+        if (!preparedData.productImage) {
+          preparedData.productImage = "/logo.jpg";
+        }
+      }
+
       const payload =
         modalMode === "edit" || isRelist
-          ? { id: editingDealId, relist: isRelist, ...formData }
-          : formData;
+          ? { id: editingDealId, relist: isRelist, ...preparedData }
+          : preparedData;
 
       const res = await fetch(url, {
         method,
@@ -457,9 +475,16 @@ export default function AdminDealsPage() {
                           {deal.marketplace}
                         </span>
                       </td>
-                      <td className="p-4 sm:p-5 font-black text-plum-950 text-sm">₹{deal.price}</td>
+                      <td className="p-4 sm:p-5 font-black text-plum-950 text-sm">
+                        {deal.dealType === "No Investment" ? "₹0 (Free)" : `₹${deal.price}`}
+                      </td>
                       <td className="p-4 sm:p-5">
-                        {deal.pricingType === "LESS" ? (
+                        {deal.dealType === "No Investment" ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-900 border border-emerald-300 font-black text-[10px] inline-flex items-center gap-1">
+                            <Sparkles className="w-3 h-3 text-emerald-600" />
+                            WhatsApp Deal
+                          </span>
+                        ) : deal.pricingType === "LESS" ? (
                           <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-black text-[10px]">
                             Less ₹{deal.lessAmount}
                           </span>
@@ -474,32 +499,48 @@ export default function AdminDealsPage() {
                         )}
                       </td>
                       <td className="p-4 sm:p-5">
-                        <div className="font-bold text-gray-800 text-xs">
-                          {deal.remainingReview} / {deal.reviewSlots}
-                        </div>
-                        <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                          <div
-                            className="h-full bg-lotus-500"
-                            style={{ width: `${(deal.remainingReview / (deal.reviewSlots || 1)) * 100}%` }}
-                          />
-                        </div>
+                        {deal.dealType === "No Investment" ? (
+                          <span className="text-[11px] text-gray-400 font-medium">WhatsApp</span>
+                        ) : (
+                          <>
+                            <div className="font-bold text-gray-800 text-xs">
+                              {deal.remainingReview} / {deal.reviewSlots}
+                            </div>
+                            <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                              <div
+                                className="h-full bg-lotus-500"
+                                style={{ width: `${(deal.remainingReview / (deal.reviewSlots || 1)) * 100}%` }}
+                              />
+                            </div>
+                          </>
+                        )}
                       </td>
                       <td className="p-4 sm:p-5">
-                        <div className="font-bold text-gray-800 text-xs">
-                          {deal.remainingRating} / {deal.ratingSlots}
-                        </div>
-                        <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                          <div
-                            className="h-full bg-gold-500"
-                            style={{ width: `${(deal.remainingRating / (deal.ratingSlots || 1)) * 100}%` }}
-                          />
-                        </div>
+                        {deal.dealType === "No Investment" ? (
+                          <span className="text-[11px] text-gray-400 font-medium">WhatsApp</span>
+                        ) : (
+                          <>
+                            <div className="font-bold text-gray-800 text-xs">
+                              {deal.remainingRating} / {deal.ratingSlots}
+                            </div>
+                            <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                              <div
+                                className="h-full bg-gold-500"
+                                style={{ width: `${(deal.remainingRating / (deal.ratingSlots || 1)) * 100}%` }}
+                              />
+                            </div>
+                          </>
+                        )}
                       </td>
                       <td className="p-4 sm:p-5 font-black text-plum-950 text-xs">
-                        {deal.remainingSlots} / {deal.totalSlots}
+                        {deal.dealType === "No Investment" ? "Direct" : `${deal.remainingSlots} / ${deal.totalSlots}`}
                       </td>
                       <td className="p-4 sm:p-5">
-                        {isCompleted ? (
+                        {deal.dealType === "No Investment" ? (
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
+                            Active (Take Deal)
+                          </span>
+                        ) : isCompleted ? (
                           <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-bold text-[10px] border border-gray-300">
                             Sold Out (Archived)
                           </span>
@@ -669,28 +710,44 @@ export default function AdminDealsPage() {
                 </div>
               </div>
 
-              {/* Special No Investment Deal Configuration */}
+              {/* Special No Investment Deal: Simple 3-Field Green Box UI */}
               {formData.dealType === "No Investment" && (
-                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white border border-emerald-300 space-y-3 shadow-xs">
-                  <div className="flex items-center gap-2 pb-2 border-b border-emerald-200">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
-                      Special No Investment Deal Settings
-                    </span>
-                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
-                      Redirects to Admin WhatsApp
+                <div className="p-5 rounded-3xl bg-gradient-to-br from-emerald-50 via-teal-50/50 to-white border-2 border-emerald-400 space-y-4 shadow-sm">
+                  <div className="flex items-center justify-between pb-3 border-b border-emerald-200">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-emerald-600" />
+                      <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                        Simple No Investment Deal
+                      </span>
+                    </div>
+                    <span className="text-[10px] px-2.5 py-0.5 rounded-full bg-emerald-600 text-white font-black shadow-2xs">
+                      💎 3 Simple Fields Only
                     </span>
                   </div>
 
                   <div>
                     <label className="block text-xs font-bold text-emerald-950 mb-1">
-                      Special Deal Description & Instructions * <span className="text-gray-400 font-normal text-[10px]">(Visible on special deal card)</span>
+                      Deal Title / Campaign Name <span className="text-gray-400 font-normal text-[10px]">(Optional, default: No Investment Deal)</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={formData.productName}
+                      onChange={(e) => setFormData({ ...formData, productName: e.target.value })}
+                      placeholder="No Investment Deal"
+                      className="w-full px-3 py-2.5 rounded-xl border border-emerald-200 text-xs font-bold text-gray-800 focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-950 mb-1">
+                      1. Special Deal Description & Instructions * <span className="text-gray-400 font-normal text-[10px]">(Visible on deal card)</span>
                     </label>
                     <textarea
                       rows={3}
                       value={formData.description}
                       onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                       placeholder="e.g. Exclusive zero investment campaign. No upfront payment required from user! Contact administration on WhatsApp to reserve deal slot."
+                      required
                       className="w-full p-2.5 rounded-xl border border-emerald-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white text-gray-800 font-medium"
                     />
                   </div>
@@ -698,7 +755,7 @@ export default function AdminDealsPage() {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <div>
                       <label className="block text-xs font-bold text-emerald-950 mb-1">
-                        Admin WhatsApp Number <span className="text-gray-400 font-normal text-[10px]">(For Take Deal)</span>
+                        2. Admin WhatsApp Number <span className="text-gray-400 font-normal text-[10px]">(For Take Deal action)</span>
                       </label>
                       <input
                         type="text"
@@ -711,7 +768,7 @@ export default function AdminDealsPage() {
 
                     <div>
                       <label className="block text-xs font-bold text-emerald-950 mb-1">
-                        Pre-configured WhatsApp Message
+                        3. Pre-configured WhatsApp Message
                       </label>
                       <input
                         type="text"
@@ -722,12 +779,22 @@ export default function AdminDealsPage() {
                       />
                     </div>
                   </div>
+
+                  <div className="p-3 rounded-2xl bg-emerald-100/70 border border-emerald-200 text-emerald-900 text-[11px] leading-relaxed flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-emerald-600 shrink-0" />
+                    <span>
+                      <strong>Simple Deal Mode:</strong> Brand, pricing, marketplace, and stock slots are not needed. Buyers &amp; mediators will directly see the &quot;Take Deal (WhatsApp)&quot; button!
+                    </span>
+                  </div>
                 </div>
               )}
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-xs font-semibold text-plum-900 mb-1">Brand Name *</label>
+              {/* Standard Deal Fields: Hidden when "No Investment" Deal is selected */}
+              {formData.dealType !== "No Investment" && (
+                <>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-xs font-semibold text-plum-900 mb-1">Brand Name *</label>
                   <CustomDropdown
                     value={formData.brandName}
                     onChange={(val) => setFormData({ ...formData, brandName: val })}
@@ -928,6 +995,8 @@ export default function AdminDealsPage() {
                   Total Deal Stock: {(Number(formData.reviewSlots) || 0) + (Number(formData.ratingSlots) || 0)} Units
                 </div>
               </div>
+            </>
+          )}
 
               <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                 <button
