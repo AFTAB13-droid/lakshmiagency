@@ -15,6 +15,7 @@ import {
   X,
   MessageCircle,
   Package,
+  Trash2,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import CustomDropdown from "@/components/common/CustomDropdown";
@@ -78,6 +79,31 @@ export default function AdminOrdersPage() {
       toast.error("Network error");
     } finally {
       setUpdating(false);
+    }
+  };
+
+  const handleDeleteOrder = async (order: any) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete order #${order.marketplaceOrderId}?\n\nIf this order was active, 1 slot will be automatically replenished back to the deal inventory.`
+    );
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/admin/orders?id=${order._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "Order deleted and stock replenished!");
+        if (selectedOrder?._id === order._id) {
+          setSelectedOrder(null);
+        }
+        fetchOrders();
+      } else {
+        toast.error(data.error || "Failed to delete order");
+      }
+    } catch (err) {
+      toast.error("Network error deleting order");
     }
   };
 
@@ -216,7 +242,15 @@ export default function AdminOrdersPage() {
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedOrders.map((o) => {
-                  const cleanBuyerPhone = o.buyerPhone
+                  const isOrderIdAsPhone =
+                    Boolean(o.buyerPhone) &&
+                    (o.buyerPhone === o.marketplaceOrderId ||
+                      (o.buyerPhone.includes("-") && o.buyerPhone.length >= 14) ||
+                      /^\d{3}-\d{7}-\d{7}$/.test(o.buyerPhone) ||
+                      /^NYK-/i.test(o.buyerPhone));
+
+                  const displayPhone = isOrderIdAsPhone ? "— (Not Provided)" : o.buyerPhone;
+                  const cleanBuyerPhone = !isOrderIdAsPhone && o.buyerPhone
                     ? o.buyerPhone.replace(/\D/g, "").slice(-10)
                     : "";
 
@@ -250,7 +284,7 @@ export default function AdminOrdersPage() {
                         <div className="flex items-center gap-2">
                           <div>
                             <div className="font-extrabold text-gray-900">{o.buyerName}</div>
-                            <div className="text-[11px] text-gray-400 font-mono mt-0.5">{o.buyerPhone}</div>
+                            <div className="text-[11px] text-gray-400 font-mono mt-0.5">{displayPhone}</div>
                           </div>
                           {buyerWaUrl && (
                             <a
@@ -314,15 +348,24 @@ export default function AdminOrdersPage() {
 
                       {/* Actions */}
                       <td className="p-4 sm:p-5 text-right">
-                        <button
-                          onClick={() => {
-                            setSelectedOrder(o);
-                            setUtr(o.transactionReference || "");
-                          }}
-                          className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white font-bold text-xs shadow-sm hover:scale-105 active:scale-95 transition-all"
-                        >
-                          Manage
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => {
+                              setSelectedOrder(o);
+                              setUtr(o.transactionReference || "");
+                            }}
+                            className="px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white font-bold text-xs shadow-sm hover:scale-105 active:scale-95 transition-all"
+                          >
+                            Manage
+                          </button>
+                          <button
+                            onClick={() => handleDeleteOrder(o)}
+                            title="Delete order & replenish slot"
+                            className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 transition-all hover:scale-105 active:scale-95"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </motion.tr>
                   );
@@ -624,15 +667,28 @@ export default function AdminOrdersPage() {
             {/* Actions Bar */}
             {!isRejecting && (
               <div className="flex flex-wrap gap-2 justify-between items-center pt-4 border-t border-gray-100 mt-4">
-                <button
-                  type="button"
-                  onClick={() => setIsRejecting(true)}
-                  disabled={updating}
-                  className="px-4 py-2 rounded-xl bg-red-50 text-red-700 font-bold text-xs hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-1"
-                >
-                  <XCircle className="w-3.5 h-3.5 text-red-600" />
-                  Reject Submission
-                </button>
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setIsRejecting(true)}
+                    disabled={updating}
+                    className="px-3.5 py-2 rounded-xl bg-red-50 text-red-700 font-bold text-xs hover:bg-red-100 border border-red-200 transition-colors flex items-center gap-1"
+                  >
+                    <XCircle className="w-3.5 h-3.5 text-red-600" />
+                    Reject Submission
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => handleDeleteOrder(selectedOrder)}
+                    disabled={updating}
+                    className="px-3.5 py-2 rounded-xl bg-gray-50 text-gray-700 font-bold text-xs hover:bg-red-50 hover:text-red-700 border border-gray-200 hover:border-red-200 transition-colors flex items-center gap-1"
+                    title="Delete order and replenish 1 slot back to deal"
+                  >
+                    <Trash2 className="w-3.5 h-3.5 text-red-500" />
+                    Delete & Restore Stock
+                  </button>
+                </div>
 
                 <div className="flex items-center gap-2">
                   <button

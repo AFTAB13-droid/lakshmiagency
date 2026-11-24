@@ -17,6 +17,7 @@ import {
   Zap,
   Pencil,
   Trash2,
+  RefreshCw,
 } from "lucide-react";
 
 export const getDealTypeBadge = (dealType?: string) => {
@@ -48,6 +49,7 @@ interface DealCardProps {
   onCopyAnnouncement?: (deal: any) => void;
   onEdit?: (deal: any) => void;
   onDelete?: (deal: any) => void;
+  onRelist?: (deal: any) => void;
   isAdmin?: boolean;
 }
 
@@ -60,6 +62,7 @@ export default function DealCard({
   onCopyAnnouncement,
   onEdit,
   onDelete,
+  onRelist,
   isAdmin = false,
 }: DealCardProps) {
   const [copiedLink, setCopiedLink] = useState(false);
@@ -328,18 +331,38 @@ export default function DealCard({
                 )}
               </button>
 
-              <a
-                href={prefilledUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
-              >
-                <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
-                Open Form
-              </a>
+              {isFull ? (
+                <button
+                  disabled
+                  className="py-2 px-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-not-allowed shadow-none"
+                  title="Slots completed. Form is closed."
+                >
+                  Slots Closed
+                </button>
+              ) : (
+                <a
+                  href={prefilledUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
+                  Open Form
+                </a>
+              )}
             </div>
 
             <div className="flex items-center gap-2 flex-wrap">
+              {onRelist && isFull && (
+                <button
+                  onClick={() => onRelist(deal)}
+                  className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <RefreshCw className="w-3.5 h-3.5 text-emerald-200" />
+                  Relist Deal
+                </button>
+              )}
+
               {onEdit && (
                 <button
                   onClick={() => onEdit(deal)}
@@ -584,27 +607,39 @@ export default function DealCard({
       {/* Action Buttons Hub matching ZMA */}
       <div className="p-4 pt-0 space-y-2.5">
         {/* Admin Quick Action Controls */}
-        {(onEdit || onDelete) && (
-          <div className="grid grid-cols-2 gap-2">
-            {onEdit && (
+        {(onEdit || onDelete || onRelist) && (
+          <div className="space-y-2">
+            {onRelist && isFull && (
               <button
-                onClick={() => onEdit(deal)}
-                className="py-2.5 px-3 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 font-bold text-xs border border-plum-200/90 shadow-2xs hover:border-plum-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                onClick={() => onRelist(deal)}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 transition-all flex items-center justify-center gap-1.5 active:scale-95"
               >
-                <Pencil className="w-3.5 h-3.5 text-plum-700" />
-                Edit Deal
+                <RefreshCw className="w-3.5 h-3.5 text-emerald-200" />
+                Relist / Add Custom Stock
               </button>
             )}
 
-            {onDelete && (
-              <button
-                onClick={() => onDelete(deal)}
-                className="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs border border-red-200/90 shadow-2xs hover:border-red-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
-              >
-                <Trash2 className="w-3.5 h-3.5 text-red-600" />
-                Delete
-              </button>
-            )}
+            <div className="grid grid-cols-2 gap-2">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(deal)}
+                  className="py-2.5 px-3 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 font-bold text-xs border border-plum-200/90 shadow-2xs hover:border-plum-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-plum-700" />
+                  Edit Deal
+                </button>
+              )}
+
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(deal)}
+                  className="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs border border-red-200/90 shadow-2xs hover:border-red-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  Delete
+                </button>
+              )}
+            </div>
           </div>
         )}
 
@@ -655,15 +690,25 @@ export default function DealCard({
             )}
           </button>
 
-          <a
-            href={prefilledUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
-          >
-            <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
-            Open Form
-          </a>
+          {isFull ? (
+            <button
+              disabled
+              className="py-2 px-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-not-allowed shadow-none"
+              title="All slots completed. Form submissions are closed."
+            >
+              Slots Closed
+            </button>
+          ) : (
+            <a
+              href={prefilledUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
+            >
+              <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
+              Open Form
+            </a>
+          )}
         </div>
       </div>
     </motion.div>

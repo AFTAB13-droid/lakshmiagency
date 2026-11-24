@@ -18,6 +18,9 @@ import {
   List,
   Pencil,
   Trash2,
+  Archive,
+  RefreshCw,
+  Zap,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import SafeImage from "@/components/common/SafeImage";
@@ -30,7 +33,8 @@ export default function AdminDealsPage() {
   const [marketplaces, setMarketplaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [modalMode, setModalMode] = useState<"create" | "edit" | "relist">("create");
+  const [activeTab, setActiveTab] = useState<"active" | "archived">("active");
   const [editingDealId, setEditingDealId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
@@ -101,6 +105,27 @@ export default function AdminDealsPage() {
     setShowModal(true);
   };
 
+  const handleRelist = (deal: any) => {
+    setModalMode("relist");
+    setEditingDealId(deal._id);
+    setFormData({
+      brandName: deal.brandName || "",
+      productName: deal.productName || "",
+      productCode: deal.productCode || "",
+      marketplace: deal.marketplace || "Amazon",
+      productLink: deal.productLink || "",
+      productImage: deal.productImage || "",
+      price: deal.price !== undefined ? String(deal.price) : "",
+      pricingType: deal.pricingType || "LESS",
+      lessAmount: deal.lessAmount !== undefined ? String(deal.lessAmount) : "",
+      commissionAmount: deal.commissionAmount !== undefined ? String(deal.commissionAmount) : "",
+      reviewSlots: "10",
+      ratingSlots: "10",
+      dealType: deal.dealType || "Original",
+    });
+    setShowModal(true);
+  };
+
   const handleDelete = async (deal: any) => {
     const confirmed = window.confirm(
       `Are you sure you want to permanently delete deal #${deal.productCode} (${deal.productName})?\n\nThis will remove the deal and its remaining review slots.`
@@ -154,8 +179,12 @@ export default function AdminDealsPage() {
     setSubmitting(true);
     try {
       const url = "/api/admin/deals";
-      const method = modalMode === "edit" ? "PATCH" : "POST";
-      const payload = modalMode === "edit" ? { id: editingDealId, ...formData } : formData;
+      const isRelist = modalMode === "relist";
+      const method = modalMode === "edit" || isRelist ? "PATCH" : "POST";
+      const payload =
+        modalMode === "edit" || isRelist
+          ? { id: editingDealId, relist: isRelist, ...formData }
+          : formData;
 
       const res = await fetch(url, {
         method,
@@ -165,10 +194,17 @@ export default function AdminDealsPage() {
       const data = await res.json();
       if (data.success) {
         toast.success(
-          modalMode === "edit" ? "Deal updated successfully!" : "Deal published successfully!"
+          isRelist
+            ? "Deal relisted and live with new stock!"
+            : modalMode === "edit"
+            ? "Deal updated successfully!"
+            : "Deal published successfully!"
         );
         setShowModal(false);
         resetForm();
+        if (isRelist) {
+          setActiveTab("active");
+        }
         fetchData();
       } else {
         toast.error(data.error || `Failed to ${modalMode} deal`);
@@ -180,7 +216,15 @@ export default function AdminDealsPage() {
     }
   };
 
-  const filteredDeals = deals.filter((d) => {
+  // Separation:
+  // Active: Deals where remainingSlots > 0 (even if rating slots are 0 and review slots remain)
+  // Archived: Deals where ALL slots are completely finished (remainingSlots <= 0)
+  const activeDealsList = deals.filter((d) => (d.remainingSlots ?? 0) > 0);
+  const archivedDealsList = deals.filter((d) => (d.remainingSlots ?? 0) <= 0);
+
+  const baseDeals = activeTab === "active" ? activeDealsList : archivedDealsList;
+
+  const filteredDeals = baseDeals.filter((d) => {
     const q = search.toLowerCase();
     return (
       d.productName?.toLowerCase().includes(q) ||
@@ -209,6 +253,51 @@ export default function AdminDealsPage() {
           <Plus className="w-4 h-4 text-gold-400" />
           Create New Deal
         </button>
+      </div>
+
+      {/* Tab Switcher: Active Deals vs Archived Deals */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-white p-3.5 rounded-3xl border border-plum-100 shadow-xs">
+        <div className="flex items-center gap-2 p-1 bg-plum-50/70 rounded-2xl border border-plum-100">
+          <button
+            onClick={() => {
+              setActiveTab("active");
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${
+              activeTab === "active"
+                ? "plum-gradient-bg text-white shadow-sm"
+                : "text-plum-900 hover:bg-plum-100/60"
+            }`}
+          >
+            <Zap className="w-3.5 h-3.5 text-gold-400" />
+            Active Campaigns ({activeDealsList.length})
+          </button>
+
+          <button
+            onClick={() => {
+              setActiveTab("archived");
+              setCurrentPage(1);
+            }}
+            className={`px-4 py-2 rounded-xl text-xs font-black transition-all flex items-center gap-2 ${
+              activeTab === "archived"
+                ? "bg-plum-950 text-white shadow-sm"
+                : "text-gray-500 hover:text-plum-900 hover:bg-plum-100/60"
+            }`}
+          >
+            <Archive className="w-3.5 h-3.5 text-amber-400" />
+            Archived / Sold Out ({archivedDealsList.length})
+          </button>
+        </div>
+
+        <div className="text-[11px] font-medium px-2">
+          {activeTab === "active" ? (
+            <span className="text-gray-400">Campaigns with remaining review or rating slots available to users</span>
+          ) : (
+            <span className="text-amber-800 font-semibold bg-amber-50 px-2.5 py-1 rounded-xl border border-amber-200">
+              Completed deals with 0 stock. Click &quot;Relist&quot; to add custom stock and reactivate.
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Search & View Mode Switcher */}
@@ -285,6 +374,7 @@ export default function AdminDealsPage() {
                 mediatorCode="ADMIN"
                 onEdit={handleEdit}
                 onDelete={handleDelete}
+                onRelist={handleRelist}
                 isAdmin={true}
               />
             ))}
@@ -314,12 +404,14 @@ export default function AdminDealsPage() {
                   <th className="p-4 sm:p-5">REVIEW SLOTS</th>
                   <th className="p-4 sm:p-5">RATING SLOTS</th>
                   <th className="p-4 sm:p-5">TOTAL SLOTS</th>
+                  <th className="p-4 sm:p-5">STATUS</th>
                   <th className="p-4 sm:p-5 text-right">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
                 {paginatedDeals.map((deal) => {
                   const dealTypeBadge = getDealTypeBadge(deal.dealType);
+                  const isCompleted = (deal.remainingSlots ?? 0) <= 0;
                   return (
                     <tr key={deal._id} className="hover:bg-plum-50/20 transition-colors">
                       <td className="p-4 sm:p-5">
@@ -394,8 +486,29 @@ export default function AdminDealsPage() {
                       <td className="p-4 sm:p-5 font-black text-plum-950 text-xs">
                         {deal.remainingSlots} / {deal.totalSlots}
                       </td>
+                      <td className="p-4 sm:p-5">
+                        {isCompleted ? (
+                          <span className="px-2.5 py-1 rounded-full bg-gray-100 text-gray-700 font-bold text-[10px] border border-gray-300">
+                            Sold Out (Archived)
+                          </span>
+                        ) : (
+                          <span className="px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 font-bold text-[10px] border border-emerald-200">
+                            Active ({deal.remainingSlots} Left)
+                          </span>
+                        )}
+                      </td>
                       <td className="p-4 sm:p-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
+                          {isCompleted && (
+                            <button
+                              onClick={() => handleRelist(deal)}
+                              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold text-xs shadow-2xs hover:from-emerald-500 hover:to-emerald-600 transition-all flex items-center gap-1 active:scale-95"
+                              title="Relist completed deal with new stock"
+                            >
+                              <RefreshCw className="w-3.5 h-3.5 text-emerald-200" />
+                              <span className="hidden sm:inline text-[11px]">Relist</span>
+                            </button>
+                          )}
                           <button
                             onClick={() => handleEdit(deal)}
                             className="p-2 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 border border-plum-200 transition-all shadow-2xs hover:scale-105 active:scale-95"
@@ -436,14 +549,26 @@ export default function AdminDealsPage() {
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-plum-100 text-plum-700 flex items-center justify-center font-bold">
-                  {modalMode === "edit" ? <Pencil className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
+                  {modalMode === "relist" ? (
+                    <RefreshCw className="w-4 h-4 text-emerald-600" />
+                  ) : modalMode === "edit" ? (
+                    <Pencil className="w-4 h-4" />
+                  ) : (
+                    <Tag className="w-4 h-4" />
+                  )}
                 </div>
                 <div>
                   <h3 className="font-serif font-bold text-plum-900 text-base">
-                    {modalMode === "edit" ? "Edit Deal Campaign" : "Create New Deal"}
+                    {modalMode === "relist"
+                      ? "Relist Completed Deal"
+                      : modalMode === "edit"
+                      ? "Edit Deal Campaign"
+                      : "Create New Deal"}
                   </h3>
                   <p className="text-[11px] text-gray-400">
-                    {modalMode === "edit"
+                    {modalMode === "relist"
+                      ? "Set custom new stock slots to immediately reactivate this deal for buyers & mediators"
+                      : modalMode === "edit"
                       ? "Update pricing, deal type, review slot counts, or listing links"
                       : "Configure product details, pricing model, and granular slots"}
                   </p>
@@ -737,7 +862,11 @@ export default function AdminDealsPage() {
                   className="px-5 py-2 rounded-xl plum-gradient-bg text-white text-xs font-bold shadow hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  {modalMode === "edit" ? "Save Changes" : "Publish Deal"}
+                  {modalMode === "relist"
+                    ? "Relist with New Stock"
+                    : modalMode === "edit"
+                    ? "Save Changes"
+                    : "Publish Deal"}
                 </button>
               </div>
             </form>

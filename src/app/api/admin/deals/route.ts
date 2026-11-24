@@ -127,22 +127,51 @@ export async function PATCH(req: NextRequest) {
     if (updateData.dealType !== undefined) deal.dealType = updateData.dealType;
     if (updateData.isActive !== undefined) deal.isActive = Boolean(updateData.isActive);
 
-    // Update slots if provided
-    if (updateData.reviewSlots !== undefined || updateData.ratingSlots !== undefined) {
-      const newReview = updateData.reviewSlots !== undefined ? Number(updateData.reviewSlots) : deal.reviewSlots;
-      const newRating = updateData.ratingSlots !== undefined ? Number(updateData.ratingSlots) : deal.ratingSlots;
-
-      const usedReview = Math.max(0, deal.reviewSlots - deal.remainingReview);
-      const usedRating = Math.max(0, deal.ratingSlots - deal.remainingRating);
-
+    // Relist Mode: Admin adds fresh custom stock to completed/archived deal
+    if (updateData.relist === true) {
+      const newReview = updateData.reviewSlots !== undefined ? Number(updateData.reviewSlots) : 10;
+      const newRating = updateData.ratingSlots !== undefined ? Number(updateData.ratingSlots) : 10;
       deal.reviewSlots = newReview;
-      deal.remainingReview = Math.max(0, newReview - usedReview);
-
+      deal.remainingReview = newReview;
       deal.ratingSlots = newRating;
-      deal.remainingRating = Math.max(0, newRating - usedRating);
-
+      deal.remainingRating = newRating;
       deal.totalSlots = newReview + newRating;
-      deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+      deal.remainingSlots = newReview + newRating;
+      deal.isActive = deal.remainingSlots > 0;
+    } else {
+      // Direct slot overrides
+      if (updateData.remainingReview !== undefined) {
+        deal.remainingReview = Number(updateData.remainingReview);
+      }
+      if (updateData.remainingRating !== undefined) {
+        deal.remainingRating = Number(updateData.remainingRating);
+      }
+
+      // Slot adjustment based on total slot modifications
+      if (updateData.reviewSlots !== undefined || updateData.ratingSlots !== undefined) {
+        const newReview = updateData.reviewSlots !== undefined ? Number(updateData.reviewSlots) : deal.reviewSlots;
+        const newRating = updateData.ratingSlots !== undefined ? Number(updateData.ratingSlots) : deal.ratingSlots;
+
+        const usedReview = Math.max(0, deal.reviewSlots - deal.remainingReview);
+        const usedRating = Math.max(0, deal.ratingSlots - deal.remainingRating);
+
+        deal.reviewSlots = newReview;
+        deal.remainingReview = Math.max(0, newReview - usedReview);
+
+        deal.ratingSlots = newRating;
+        deal.remainingRating = Math.max(0, newRating - usedRating);
+
+        deal.totalSlots = newReview + newRating;
+        deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+      } else if (updateData.remainingReview !== undefined || updateData.remainingRating !== undefined) {
+        deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+      }
+
+      if (deal.remainingSlots > 0 && deal.isActive === false) {
+        deal.isActive = true;
+      } else if (deal.remainingSlots <= 0) {
+        deal.isActive = false;
+      }
     }
 
     await deal.save();
