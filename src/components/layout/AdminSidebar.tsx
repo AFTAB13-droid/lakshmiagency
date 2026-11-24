@@ -19,6 +19,7 @@ import {
   Sparkles,
   ChevronRight,
   KeyRound,
+  Award,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
@@ -47,6 +48,12 @@ const navItems = [
     subLabel: "Track forms & verify UTR payouts",
     href: "/admin/orders",
     icon: ShoppingBag,
+  },
+  {
+    label: "Mediators Hub",
+    subLabel: "Approval requests & agent orders",
+    href: "/admin/mediators",
+    icon: Award,
   },
   {
     label: "User Directory",

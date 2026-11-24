@@ -34,8 +34,9 @@ export async function POST(req: NextRequest) {
     }
 
     // Auto-generate mediator code if role is PREMIUM_USER and none provided
+    const isMediator = role === UserRole.PREMIUM_USER;
     let finalMediatorCode = mediatorCode;
-    if (role === UserRole.PREMIUM_USER && !finalMediatorCode) {
+    if (isMediator && !finalMediatorCode) {
       const count = await User.countDocuments({ role: UserRole.PREMIUM_USER });
       finalMediatorCode = `LAX${String(count + 1).padStart(3, "0")}`;
     }
@@ -47,7 +48,8 @@ export async function POST(req: NextRequest) {
       password,
       role: role as UserRole,
       mediatorCode: finalMediatorCode,
-      isActive: true,
+      isActive: isMediator ? false : true,
+      mediatorApprovalStatus: isMediator ? "PENDING" : "APPROVED",
     });
 
     // Clean up OTP record
@@ -55,9 +57,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: "Account verified and registered successfully!",
+      message: isMediator
+        ? "Your mediator registration is under verification. Once approved by admin, you will be able to log in."
+        : "Account verified and registered successfully!",
       userId: newUser._id,
       role: newUser.role,
+      isMediator,
+      mediatorCode: finalMediatorCode,
+      approvalStatus: isMediator ? "PENDING" : "APPROVED",
     });
   } catch (error: any) {
     console.error("Register verify error:", error);

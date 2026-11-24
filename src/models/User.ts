@@ -6,6 +6,12 @@ export enum UserRole {
   USER = "USER",                 // Buyer
 }
 
+export enum MediatorApprovalStatus {
+  PENDING = "PENDING",
+  APPROVED = "APPROVED",
+  REJECTED = "REJECTED",
+}
+
 export interface IUser extends Document {
   name: string;
   email: string;
@@ -13,6 +19,9 @@ export interface IUser extends Document {
   password?: string;
   role: UserRole;
   mediatorCode?: string; // e.g. LAX096 for Premium Users
+  mediatorApprovalStatus?: "PENDING" | "APPROVED" | "REJECTED";
+  mediatorRejectionReason?: string;
+  mediatorApprovedAt?: Date;
   paymentDetails?: {
     upiId?: string;
     bankName?: string;
@@ -41,6 +50,15 @@ const UserSchema = new Schema<IUser>(
       required: true,
     },
     mediatorCode: { type: String, sparse: true, uppercase: true, trim: true },
+    mediatorApprovalStatus: {
+      type: String,
+      enum: ["PENDING", "APPROVED", "REJECTED"],
+      default: function(this: any) {
+        return this.role === UserRole.PREMIUM_USER ? "PENDING" : "APPROVED";
+      },
+    },
+    mediatorRejectionReason: { type: String, trim: true },
+    mediatorApprovedAt: { type: Date },
     paymentDetails: {
       upiId: { type: String, trim: true },
       bankName: { type: String, trim: true },

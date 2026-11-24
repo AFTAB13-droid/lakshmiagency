@@ -7,7 +7,7 @@ import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import toast from "react-hot-toast";
 import { motion } from "framer-motion";
-import { Eye, EyeOff, Lock, Mail, ArrowLeft, Loader2, Sparkles, Shield, User, Award } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, ArrowLeft, Loader2, Sparkles, Shield, User, Award, Clock, AlertTriangle } from "lucide-react";
 import ThreeBackground from "@/components/common/ThreeBackground";
 
 export default function LoginPage() {
@@ -18,6 +18,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [shake, setShake] = useState(false);
+  const [statusAlert, setStatusAlert] = useState<{ type: "PENDING" | "REJECTED"; message: string } | null>(null);
 
   const triggerShake = () => {
     setShake(true);
@@ -46,6 +47,21 @@ export default function LoginPage() {
           res.error === "CredentialsSignin"
             ? "Invalid email or password"
             : res.error || "Authentication failed";
+
+        if (msg.toLowerCase().includes("under verification")) {
+          setStatusAlert({
+            type: "PENDING",
+            message: "Your request is under verification. Once admin approves your request, you can login.",
+          });
+        } else if (msg.toLowerCase().includes("rejected")) {
+          setStatusAlert({
+            type: "REJECTED",
+            message: msg.includes("Admin has rejected") ? msg : "Admin has rejected your request. Please contact support.",
+          });
+        } else {
+          setStatusAlert(null);
+        }
+
         toast.error(msg);
         setLoading(false);
       } else {
@@ -148,6 +164,33 @@ export default function LoginPage() {
             Admin
           </button>
         </div>
+
+        {/* Status Verification Alert Banner */}
+        {statusAlert && (
+          <motion.div
+            initial={{ opacity: 0, y: -8 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`p-4 rounded-2xl mb-6 flex items-start gap-3 border shadow-sm ${
+              statusAlert.type === "PENDING"
+                ? "bg-amber-50/90 border-amber-300 text-amber-950"
+                : "bg-red-50/90 border-red-300 text-red-950"
+            }`}
+          >
+            {statusAlert.type === "PENDING" ? (
+              <Clock className="w-5 h-5 text-amber-600 shrink-0 mt-0.5 animate-pulse" />
+            ) : (
+              <AlertTriangle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+            )}
+            <div className="space-y-1">
+              <h4 className="font-black text-xs uppercase tracking-wider">
+                {statusAlert.type === "PENDING" ? "Account Under Verification" : "Application Rejected"}
+              </h4>
+              <p className="text-xs leading-relaxed font-medium">
+                {statusAlert.message}
+              </p>
+            </div>
+          </motion.div>
+        )}
 
         {/* Login Form */}
         <form onSubmit={handleSubmit} className="space-y-5">

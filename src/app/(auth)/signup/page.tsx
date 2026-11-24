@@ -22,12 +22,14 @@ import {
   Sparkles,
   Clock,
   AlertTriangle,
+  ShieldCheck,
 } from "lucide-react";
 import ThreeBackground from "@/components/common/ThreeBackground";
 
 export default function SignUpPage() {
   const router = useRouter();
-  const [step, setStep] = useState<"DETAILS" | "OTP">("DETAILS");
+  const [step, setStep] = useState<"DETAILS" | "OTP" | "MEDIATOR_PENDING">("DETAILS");
+  const [registeredCode, setRegisteredCode] = useState("");
   const [role, setRole] = useState<"USER" | "PREMIUM_USER">("USER");
   const [shake, setShake] = useState(false);
 
@@ -196,10 +198,16 @@ export default function SignUpPage() {
           colors: ["#D4AF37", "#E83A89", "#520D38", "#FFD700"],
         });
 
-        toast.success("Account created successfully! Redirecting...");
-        setTimeout(() => {
-          router.push("/login");
-        }, 1800);
+        if (data.isMediator || role === "PREMIUM_USER") {
+          setRegisteredCode(data.mediatorCode || formData.mediatorCode);
+          setStep("MEDIATOR_PENDING");
+          toast.success("Registration submitted! Under admin verification.");
+        } else {
+          toast.success("Account created successfully! Redirecting...");
+          setTimeout(() => {
+            router.push("/login");
+          }, 1800);
+        }
       } else {
         triggerShake();
         toast.error(data.error || "Verification failed");
@@ -246,16 +254,64 @@ export default function SignUpPage() {
             </div>
           </div>
           <h2 className="font-serif text-2xl sm:text-3xl font-black text-plum-950 tracking-tight">
-            Create an Account
+            {step === "MEDIATOR_PENDING" ? "Application Submitted" : "Create an Account"}
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
-            {step === "DETAILS"
+            {step === "MEDIATOR_PENDING"
+              ? "Your mediator registration request is under administrative review"
+              : step === "DETAILS"
               ? "Join Lakshmi Agency to track orders, feedback slots & verified payouts"
               : `Enter the 6-digit verification code sent to ${formData.email}`}
           </p>
         </div>
 
-        {step === "DETAILS" ? (
+        {step === "MEDIATOR_PENDING" ? (
+          <div className="space-y-6 text-center">
+            <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 via-gold-500 to-amber-600 text-white flex items-center justify-center mx-auto shadow-xl shadow-gold-500/25 animate-pulse">
+              <Clock className="w-8 h-8" />
+            </div>
+
+            <div className="space-y-2">
+              <span className="px-3 py-1 rounded-full bg-amber-100 text-amber-900 border border-amber-300 text-[11px] font-black tracking-wider uppercase inline-block">
+                ⏳ Under Verification
+              </span>
+              <h3 className="font-serif text-xl sm:text-2xl font-black text-plum-950">
+                Application Received!
+              </h3>
+              <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
+                Thank you, <strong>{formData.name}</strong>. Your mediator account request has been submitted to Lakshmi Agency Administration.
+              </p>
+            </div>
+
+            {/* Verification Status Banner */}
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 text-left space-y-2.5 text-xs">
+              <div className="flex items-center gap-2 font-bold text-amber-900">
+                <ShieldCheck className="w-4 h-4 text-amber-600" />
+                Administrative Approval Required
+              </div>
+              <p className="text-amber-800/90 leading-relaxed text-[11px]">
+                Your request is under verification. Once admin approves your request, you can login. Until approval is granted, access remains locked.
+              </p>
+              <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
+                <span className="text-gray-500 font-medium">Assigned Mediator Code:</span>
+                <span className="font-mono font-black text-plum-950 bg-white px-2.5 py-0.5 rounded-lg border border-amber-200">
+                  #{registeredCode || formData.mediatorCode || "PENDING"}
+                </span>
+              </div>
+            </div>
+
+            <Link
+              href="/login"
+              className="w-full py-4 px-6 rounded-2xl plum-gradient-bg text-white font-black text-sm flex items-center justify-center gap-2 shadow-lg shadow-plum-900/25 hover:opacity-95 hover:scale-[1.01] active:scale-[0.99] transition-all block"
+            >
+              Go to Member Login &rarr;
+            </Link>
+
+            <p className="text-[11px] text-gray-400">
+              Note: Until admin approves your request, login will show that your account is under verification.
+            </p>
+          </div>
+        ) : step === "DETAILS" ? (
           <form onSubmit={handleSendOtp} className="space-y-5">
             {/* Account Role Selector */}
             <div className="grid grid-cols-2 gap-2 p-1.5 bg-plum-50/80 rounded-2xl mb-4 border border-plum-100/90 shadow-inner">

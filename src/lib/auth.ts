@@ -43,6 +43,17 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
+        // Mediator verification check: unapproved or rejected mediators cannot log in
+        if (user.role === UserRole.PREMIUM_USER) {
+          if (user.mediatorApprovalStatus === "PENDING") {
+            throw new Error("Your request is under verification. Once admin approves your request, you can login.");
+          }
+          if (user.mediatorApprovalStatus === "REJECTED") {
+            const reason = user.mediatorRejectionReason ? `: ${user.mediatorRejectionReason}` : "";
+            throw new Error(`Admin has rejected your request${reason}. Please contact support.`);
+          }
+        }
+
         if (!user.isActive) {
           throw new Error("Your account is currently inactive. Please contact support.");
         }
