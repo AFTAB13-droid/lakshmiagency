@@ -29,12 +29,6 @@ const navItems = [
     href: "/buyer/deals",
     icon: Tag,
   },
-  {
-    label: "My Orders & Tracking",
-    subLabel: "Live order stage & refund claims",
-    href: "/buyer",
-    icon: ShoppingBag,
-  },
 ];
 
 export default function BuyerSidebar() {
@@ -73,7 +67,7 @@ export default function BuyerSidebar() {
         <div className="w-[320px] flex flex-col h-full">
           {/* Brand Header */}
           <div className="p-5 border-b border-plum-100 flex items-center justify-between bg-gradient-to-r from-plum-50/70 via-lotus-50/30 to-white">
-            <Link href="/buyer" className="flex items-center gap-3.5 group">
+            <Link href="/buyer/deals" className="flex items-center gap-3.5 group">
               <div className="w-12 h-12 rounded-full p-0.5 bg-gradient-to-tr from-gold-500 via-lotus-500 to-plum-700 shadow-md group-hover:scale-105 transition-transform shrink-0">
                 <div className="w-full h-full rounded-full overflow-hidden relative bg-white">
                   <Image src="/logo.jpg" alt="Logo" fill className="object-cover" priority />

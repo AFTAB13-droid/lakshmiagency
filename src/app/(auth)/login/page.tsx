@@ -54,7 +54,7 @@ export default function LoginPage() {
         // Instant AspireMint-style immediate navigation without redundant session fetch
         const searchParams = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
         const callbackUrl = searchParams?.get("callbackUrl");
-        const defaultDest = roleTab === "ADMIN" ? "/admin" : roleTab === "PREMIUM_USER" ? "/mediator" : "/buyer";
+        const defaultDest = roleTab === "ADMIN" ? "/admin" : roleTab === "PREMIUM_USER" ? "/mediator" : "/buyer/deals";
         const target = callbackUrl && callbackUrl.startsWith("/") ? callbackUrl : defaultDest;
 
         window.location.href = target;

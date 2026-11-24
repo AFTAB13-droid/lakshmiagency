@@ -78,7 +78,7 @@ export default function MediatorDealsPage() {
     const formUrl = getPrefilledOrderFormUrl(deal.productCode);
     let template =
       settings?.whatsappOrderTemplate ||
-      `🔥 *NEW DEAL ALERT - {brandName}* 🔥\n\n📦 *Product:* {productName}\n🛒 *Platform:* {marketplace}\n💰 *Price:* ₹{price}\n🏷️ *Offer Model:* {offerModel}\n⚡ *Slots Left:* {remainingSlots}\n\n👉 *Fill Google Order Form (Instant Booking):*\n{orderFormUrl}\n\n_Agent Code: ${mediatorCode}_`;
+      `🔥 *NEW DEAL ALERT - {brandName}* 🔥\n\n📦 *Product:* {productName}\n🛒 *Platform:* {marketplace}\n🏷️ *Deal Type:* {dealType}\n💰 *Price:* ₹{price}\n🏷️ *Offer Model:* {offerModel}\n⚡ *Slots Left:* {remainingSlots}\n\n👉 *Fill Google Order Form (Instant Booking):*\n{orderFormUrl}\n\n_Agent Code: ${mediatorCode}_`;
 
     const offerModel =
       deal.pricingType === "LESS"
@@ -91,6 +91,7 @@ export default function MediatorDealsPage() {
       .replace(/{brandName}/g, deal.brandName)
       .replace(/{productName}/g, deal.productName)
       .replace(/{marketplace}/g, deal.marketplace)
+      .replace(/{dealType}/g, deal.dealType || "Original")
       .replace(/{price}/g, deal.price)
       .replace(/{offerModel}/g, offerModel)
       .replace(/{lessAmount}/g, deal.lessAmount || 0)
@@ -105,7 +106,7 @@ export default function MediatorDealsPage() {
   const handleOpenAnnouncement = (deal: any) => {
     let template =
       settings?.whatsappAnnouncementTemplate ||
-      `✨ *EXCLUSIVE VIP DEAL BROADCAST* ✨\n\n🏷️ *Brand:* {brandName}\n📦 *Product:* {productName} ({marketplace})\n💰 *Listed Price:* ₹{price}\n🎁 *Deal Benefit:* {offerModel}\n🔥 *Hurry:* Only {remainingSlots} slots remain!\n\n📲 *DM me right now with product screenshot to secure your slot!* 👈`;
+      `✨ *EXCLUSIVE VIP DEAL BROADCAST* ✨\n\n🏷️ *Brand:* {brandName}\n📦 *Product:* {productName} ({marketplace})\n🏷️ *Deal Type:* {dealType}\n💰 *Listed Price:* ₹{price}\n🎁 *Deal Benefit:* {offerModel}\n🔥 *Hurry:* Only {remainingSlots} slots remain!\n\n📲 *DM me right now with product screenshot to secure your slot!* 👈`;
 
     const offerModel =
       deal.pricingType === "LESS"
@@ -118,6 +119,7 @@ export default function MediatorDealsPage() {
       .replace(/{brandName}/g, deal.brandName)
       .replace(/{productName}/g, deal.productName)
       .replace(/{marketplace}/g, deal.marketplace)
+      .replace(/{dealType}/g, deal.dealType || "Original")
       .replace(/{price}/g, deal.price)
       .replace(/{offerModel}/g, offerModel)
       .replace(/{lessAmount}/g, deal.lessAmount || 0)

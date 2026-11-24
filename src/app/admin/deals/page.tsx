@@ -16,10 +16,12 @@ import {
   Image as ImageIcon,
   LayoutGrid,
   List,
+  Pencil,
+  Trash2,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import SafeImage from "@/components/common/SafeImage";
-import DealCard from "@/components/deals/DealCard";
+import DealCard, { getDealTypeBadge } from "@/components/deals/DealCard";
 import CustomDropdown from "@/components/common/CustomDropdown";
 
 export default function AdminDealsPage() {
@@ -28,6 +30,8 @@ export default function AdminDealsPage() {
   const [marketplaces, setMarketplaces] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [modalMode, setModalMode] = useState<"create" | "edit">("create");
+  const [editingDealId, setEditingDealId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [search, setSearch] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -50,6 +54,75 @@ export default function AdminDealsPage() {
     ratingSlots: "10",
     dealType: "Original",
   });
+
+  const resetForm = () => {
+    setFormData({
+      brandName: "",
+      productName: "",
+      productCode: "",
+      marketplace: "Amazon",
+      productLink: "",
+      productImage: "",
+      price: "",
+      pricingType: "LESS",
+      lessAmount: "",
+      commissionAmount: "",
+      reviewSlots: "10",
+      ratingSlots: "10",
+      dealType: "Original",
+    });
+    setEditingDealId(null);
+    setModalMode("create");
+  };
+
+  const openCreateModal = () => {
+    resetForm();
+    setShowModal(true);
+  };
+
+  const handleEdit = (deal: any) => {
+    setModalMode("edit");
+    setEditingDealId(deal._id);
+    setFormData({
+      brandName: deal.brandName || "",
+      productName: deal.productName || "",
+      productCode: deal.productCode || "",
+      marketplace: deal.marketplace || "Amazon",
+      productLink: deal.productLink || "",
+      productImage: deal.productImage || "",
+      price: deal.price !== undefined ? String(deal.price) : "",
+      pricingType: deal.pricingType || "LESS",
+      lessAmount: deal.lessAmount !== undefined ? String(deal.lessAmount) : "",
+      commissionAmount: deal.commissionAmount !== undefined ? String(deal.commissionAmount) : "",
+      reviewSlots: deal.reviewSlots !== undefined ? String(deal.reviewSlots) : "10",
+      ratingSlots: deal.ratingSlots !== undefined ? String(deal.ratingSlots) : "10",
+      dealType: deal.dealType || "Original",
+    });
+    setShowModal(true);
+  };
+
+  const handleDelete = async (deal: any) => {
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete deal #${deal.productCode} (${deal.productName})?\n\nThis will remove the deal and its remaining review slots.`
+    );
+    if (!confirmed) return;
+
+    const toastId = toast.loading(`Deleting deal #${deal.productCode}...`);
+    try {
+      const res = await fetch(`/api/admin/deals?id=${deal._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Deal #${deal.productCode} deleted successfully!`, { id: toastId });
+        setDeals((prev) => prev.filter((d) => d._id !== deal._id));
+      } else {
+        toast.error(data.error || "Failed to delete deal", { id: toastId });
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Network error while deleting deal", { id: toastId });
+    }
+  };
 
   const fetchData = async () => {
     try {
@@ -80,33 +153,25 @@ export default function AdminDealsPage() {
     e.preventDefault();
     setSubmitting(true);
     try {
-      const res = await fetch("/api/admin/deals", {
-        method: "POST",
+      const url = "/api/admin/deals";
+      const method = modalMode === "edit" ? "PATCH" : "POST";
+      const payload = modalMode === "edit" ? { id: editingDealId, ...formData } : formData;
+
+      const res = await fetch(url, {
+        method,
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (data.success) {
-        toast.success("Deal published successfully!");
+        toast.success(
+          modalMode === "edit" ? "Deal updated successfully!" : "Deal published successfully!"
+        );
         setShowModal(false);
+        resetForm();
         fetchData();
-        setFormData({
-          brandName: "",
-          productName: "",
-          productCode: "",
-          marketplace: "Amazon",
-          productLink: "",
-          productImage: "",
-          price: "",
-          pricingType: "LESS",
-          lessAmount: "",
-          commissionAmount: "",
-          reviewSlots: "10",
-          ratingSlots: "10",
-          dealType: "Original",
-        });
       } else {
-        toast.error(data.error || "Failed to create deal");
+        toast.error(data.error || `Failed to ${modalMode} deal`);
       }
     } catch (err) {
       toast.error("Network error");
@@ -138,7 +203,7 @@ export default function AdminDealsPage() {
           <p className="text-xs text-gray-500">Manage active campaigns, feedback slot capacity, and pricing models</p>
         </div>
         <button
-          onClick={() => setShowModal(true)}
+          onClick={openCreateModal}
           className="px-4 py-2.5 rounded-xl plum-gradient-bg text-white text-xs font-bold shadow-md hover:opacity-95 transition-all flex items-center gap-1.5"
         >
           <Plus className="w-4 h-4 text-gold-400" />
@@ -218,6 +283,9 @@ export default function AdminDealsPage() {
                 key={deal._id}
                 deal={deal}
                 mediatorCode="ADMIN"
+                onEdit={handleEdit}
+                onDelete={handleDelete}
+                isAdmin={true}
               />
             ))}
           </div>
@@ -239,92 +307,114 @@ export default function AdminDealsPage() {
               <thead>
                 <tr className="bg-plum-50/70 text-plum-900 border-b border-plum-100 font-black text-[11px] uppercase tracking-wider">
                   <th className="p-4 sm:p-5">PRODUCT / BRAND</th>
+                  <th className="p-4 sm:p-5">DEAL TYPE</th>
                   <th className="p-4 sm:p-5">PLATFORM</th>
                   <th className="p-4 sm:p-5">PRICE</th>
                   <th className="p-4 sm:p-5">PRICING MODEL</th>
                   <th className="p-4 sm:p-5">REVIEW SLOTS</th>
                   <th className="p-4 sm:p-5">RATING SLOTS</th>
                   <th className="p-4 sm:p-5">TOTAL SLOTS</th>
-                  <th className="p-4 sm:p-5 text-right">STATUS</th>
+                  <th className="p-4 sm:p-5 text-right">ACTIONS</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-100">
-                {paginatedDeals.map((deal) => (
-                  <tr key={deal._id} className="hover:bg-plum-50/20 transition-colors">
-                    <td className="p-4 sm:p-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-11 h-11 rounded-2xl overflow-hidden relative border border-gray-100 shrink-0 shadow-2xs">
-                          <SafeImage
-                            src={deal.productImage}
-                            alt="Product"
-                            fill
-                            className="object-cover"
-                            fallbackText={deal.brandName}
-                          />
-                        </div>
-                        <div>
-                          <div className="font-extrabold text-plum-950 text-sm">{deal.productName}</div>
-                          <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">
-                            <span className="font-semibold text-lotus-600">{deal.brandName}</span>
-                            <span>&bull;</span>
-                            <span className="font-mono text-gray-500 font-bold">#{deal.productCode}</span>
+                {paginatedDeals.map((deal) => {
+                  const dealTypeBadge = getDealTypeBadge(deal.dealType);
+                  return (
+                    <tr key={deal._id} className="hover:bg-plum-50/20 transition-colors">
+                      <td className="p-4 sm:p-5">
+                        <div className="flex items-center gap-3">
+                          <div className="w-11 h-11 rounded-2xl overflow-hidden relative border border-gray-100 shrink-0 shadow-2xs">
+                            <SafeImage
+                              src={deal.productImage}
+                              alt="Product"
+                              fill
+                              className="object-cover"
+                              fallbackText={deal.brandName}
+                            />
+                          </div>
+                          <div>
+                            <div className="font-extrabold text-plum-950 text-sm">{deal.productName}</div>
+                            <div className="text-[11px] text-gray-400 flex items-center gap-1.5 mt-0.5">
+                              <span className="font-semibold text-lotus-600">{deal.brandName}</span>
+                              <span>&bull;</span>
+                              <span className="font-mono text-gray-500 font-bold">#{deal.productCode}</span>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-4 sm:p-5">
-                      <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-bold text-[10px]">
-                        {deal.marketplace}
-                      </span>
-                    </td>
-                    <td className="p-4 sm:p-5 font-black text-plum-950 text-sm">₹{deal.price}</td>
-                    <td className="p-4 sm:p-5">
-                      {deal.pricingType === "LESS" ? (
-                        <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-black text-[10px]">
-                          Less ₹{deal.lessAmount}
+                      </td>
+                      <td className="p-4 sm:p-5">
+                        <span className={`px-2.5 py-1 rounded-lg font-black text-[10px] border ${dealTypeBadge.bg}`}>
+                          {dealTypeBadge.label}
                         </span>
-                      ) : deal.pricingType === "COMMISSION" ? (
-                        <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-black text-[10px]">
-                          +₹{deal.commissionAmount} Commission
+                      </td>
+                      <td className="p-4 sm:p-5">
+                        <span className="px-3 py-1 rounded-full bg-gray-100 text-gray-700 font-bold text-[10px]">
+                          {deal.marketplace}
                         </span>
-                      ) : (
-                        <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-black text-[10px]">
-                          100% Full Refund
-                        </span>
-                      )}
-                    </td>
-                    <td className="p-4 sm:p-5">
-                      <div className="font-bold text-gray-800 text-xs">
-                        {deal.remainingReview} / {deal.reviewSlots}
-                      </div>
-                      <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                        <div
-                          className="h-full bg-lotus-500"
-                          style={{ width: `${(deal.remainingReview / (deal.reviewSlots || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4 sm:p-5">
-                      <div className="font-bold text-gray-800 text-xs">
-                        {deal.remainingRating} / {deal.ratingSlots}
-                      </div>
-                      <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
-                        <div
-                          className="h-full bg-gold-500"
-                          style={{ width: `${(deal.remainingRating / (deal.ratingSlots || 1)) * 100}%` }}
-                        />
-                      </div>
-                    </td>
-                    <td className="p-4 sm:p-5 font-black text-plum-950 text-xs">
-                      {deal.remainingSlots} / {deal.totalSlots}
-                    </td>
-                    <td className="p-4 sm:p-5 text-right">
-                      <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 font-black text-[10px] border border-emerald-200 shadow-2xs">
-                        Active
-                      </span>
-                    </td>
-                  </tr>
-                ))}
+                      </td>
+                      <td className="p-4 sm:p-5 font-black text-plum-950 text-sm">₹{deal.price}</td>
+                      <td className="p-4 sm:p-5">
+                        {deal.pricingType === "LESS" ? (
+                          <span className="px-3 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200 font-black text-[10px]">
+                            Less ₹{deal.lessAmount}
+                          </span>
+                        ) : deal.pricingType === "COMMISSION" ? (
+                          <span className="px-3 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200 font-black text-[10px]">
+                            +₹{deal.commissionAmount} Commission
+                          </span>
+                        ) : (
+                          <span className="px-3 py-1 rounded-full bg-blue-50 text-blue-700 border border-blue-200 font-black text-[10px]">
+                            100% Full Refund
+                          </span>
+                        )}
+                      </td>
+                      <td className="p-4 sm:p-5">
+                        <div className="font-bold text-gray-800 text-xs">
+                          {deal.remainingReview} / {deal.reviewSlots}
+                        </div>
+                        <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                          <div
+                            className="h-full bg-lotus-500"
+                            style={{ width: `${(deal.remainingReview / (deal.reviewSlots || 1)) * 100}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="p-4 sm:p-5">
+                        <div className="font-bold text-gray-800 text-xs">
+                          {deal.remainingRating} / {deal.ratingSlots}
+                        </div>
+                        <div className="w-20 h-1.5 bg-gray-100 rounded-full mt-1 overflow-hidden">
+                          <div
+                            className="h-full bg-gold-500"
+                            style={{ width: `${(deal.remainingRating / (deal.ratingSlots || 1)) * 100}%` }}
+                          />
+                        </div>
+                      </td>
+                      <td className="p-4 sm:p-5 font-black text-plum-950 text-xs">
+                        {deal.remainingSlots} / {deal.totalSlots}
+                      </td>
+                      <td className="p-4 sm:p-5 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => handleEdit(deal)}
+                            className="p-2 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 border border-plum-200 transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            title="Edit Deal"
+                          >
+                            <Pencil className="w-3.5 h-3.5 text-plum-700" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(deal)}
+                            className="p-2 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-all shadow-2xs hover:scale-105 active:scale-95"
+                            title="Delete Deal"
+                          >
+                            <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -339,26 +429,93 @@ export default function AdminDealsPage() {
         </div>
       )}
 
-      {/* Create New Deal Modal */}
+      {/* Create / Edit Deal Modal */}
       {showModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-plum-950/60 backdrop-blur-sm overflow-y-auto">
           <div className="w-full max-w-2xl bg-white rounded-3xl p-6 shadow-2xl border border-plum-100 my-8">
             <div className="flex items-center justify-between pb-3 border-b border-gray-100 mb-4">
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-xl bg-plum-100 text-plum-700 flex items-center justify-center font-bold">
-                  <Tag className="w-4 h-4" />
+                  {modalMode === "edit" ? <Pencil className="w-4 h-4" /> : <Tag className="w-4 h-4" />}
                 </div>
                 <div>
-                  <h3 className="font-serif font-bold text-plum-900 text-base">Create New Deal</h3>
-                  <p className="text-[11px] text-gray-400">Configure product details, pricing model, and granular slots</p>
+                  <h3 className="font-serif font-bold text-plum-900 text-base">
+                    {modalMode === "edit" ? "Edit Deal Campaign" : "Create New Deal"}
+                  </h3>
+                  <p className="text-[11px] text-gray-400">
+                    {modalMode === "edit"
+                      ? "Update pricing, deal type, review slot counts, or listing links"
+                      : "Configure product details, pricing model, and granular slots"}
+                  </p>
                 </div>
               </div>
-              <button onClick={() => setShowModal(false)} className="p-1 rounded-lg hover:bg-gray-100 text-gray-400">
+              <button
+                onClick={() => {
+                  setShowModal(false);
+                  resetForm();
+                }}
+                className="p-1 rounded-lg hover:bg-gray-100 text-gray-400"
+              >
                 <X className="w-4 h-4" />
               </button>
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Deal Type Selector (Original / Exchange / Empty Box) */}
+              <div className="p-4 rounded-2xl bg-gradient-to-r from-plum-50/70 via-lotus-50/30 to-gold-50/30 border border-plum-100 space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="block text-xs font-bold text-plum-900">
+                    Deal Type *
+                  </label>
+                  <span className="text-[10px] text-gray-500 font-medium">
+                    Selected: <strong className="text-plum-950 font-black">{formData.dealType}</strong>
+                  </span>
+                </div>
+                <div className="grid grid-cols-3 gap-2">
+                  {[
+                    {
+                      id: "Original",
+                      label: "Original",
+                      desc: "Authentic Product",
+                      active: "bg-indigo-600 text-white shadow-md shadow-indigo-600/20 border-indigo-600",
+                      inactive: "bg-white text-indigo-950 border-indigo-100 hover:bg-indigo-50/60",
+                    },
+                    {
+                      id: "Exchange",
+                      label: "Exchange",
+                      desc: "Exchange / Swap",
+                      active: "bg-amber-600 text-white shadow-md shadow-amber-600/20 border-amber-600",
+                      inactive: "bg-white text-amber-950 border-amber-100 hover:bg-amber-50/60",
+                    },
+                    {
+                      id: "Empty Box",
+                      label: "Empty Box",
+                      desc: "Empty Box Deal",
+                      active: "bg-rose-600 text-white shadow-md shadow-rose-600/20 border-rose-600",
+                      inactive: "bg-white text-rose-950 border-rose-100 hover:bg-rose-50/60",
+                    },
+                  ].map((dt) => (
+                    <button
+                      key={dt.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, dealType: dt.id })}
+                      className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all ${
+                        formData.dealType === dt.id ? dt.active : dt.inactive
+                      }`}
+                    >
+                      <div className="text-xs font-black">{dt.label}</div>
+                      <div
+                        className={`text-[10px] mt-0.5 font-medium ${
+                          formData.dealType === dt.id ? "text-white/80" : "text-gray-400"
+                        }`}
+                      >
+                        {dt.desc}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-xs font-semibold text-plum-900 mb-1">Brand Name *</label>
@@ -566,7 +723,10 @@ export default function AdminDealsPage() {
               <div className="flex justify-end gap-2 pt-2 border-t border-gray-100">
                 <button
                   type="button"
-                  onClick={() => setShowModal(false)}
+                  onClick={() => {
+                    setShowModal(false);
+                    resetForm();
+                  }}
                   className="px-4 py-2 rounded-xl text-xs font-semibold text-gray-500 hover:bg-gray-100"
                 >
                   Cancel
@@ -577,7 +737,7 @@ export default function AdminDealsPage() {
                   className="px-5 py-2 rounded-xl plum-gradient-bg text-white text-xs font-bold shadow hover:opacity-95 transition-opacity disabled:opacity-50 flex items-center gap-1.5"
                 >
                   {submitting && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-                  Publish Deal
+                  {modalMode === "edit" ? "Save Changes" : "Publish Deal"}
                 </button>
               </div>
             </form>

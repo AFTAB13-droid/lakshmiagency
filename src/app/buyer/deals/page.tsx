@@ -7,6 +7,7 @@ import SafeImage from "@/components/common/SafeImage";
 import Pagination from "@/components/common/Pagination";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
 import CustomDropdown from "@/components/common/CustomDropdown";
+import { getDealTypeBadge } from "@/components/deals/DealCard";
 import {
   Tag,
   Search,
@@ -321,6 +322,7 @@ export default function BuyerDealsPage() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
           {paginatedDeals.map((deal) => {
             const mkt = getMarketplaceInfo(deal.marketplace, deal.productLink);
+            const dealTypeBadge = getDealTypeBadge(deal.dealType);
             const isFull = (deal.remainingSlots ?? 0) <= 0;
             const ratingTotal = deal.ratingSlots || 1;
             const ratingRem = deal.remainingRating ?? 0;
@@ -349,10 +351,13 @@ export default function BuyerDealsPage() {
                       className="object-contain p-2 group-hover:scale-105 transition-transform duration-300"
                     />
 
-                    {/* Top Marketplace Tag */}
-                    <div className="absolute top-3 left-3 flex items-center gap-1.5">
+                    {/* Top Marketplace Tag & Deal Type */}
+                    <div className="absolute top-3 left-3 flex items-center gap-1.5 flex-wrap max-w-[65%]">
                       <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border uppercase shadow-xs ${mkt.bg}`}>
                         {mkt.label}
+                      </span>
+                      <span className={`px-2.5 py-1 rounded-xl text-[10px] font-black border shadow-xs ${dealTypeBadge.bg}`}>
+                        {dealTypeBadge.label}
                       </span>
                     </div>
 
@@ -387,9 +392,14 @@ export default function BuyerDealsPage() {
                   {/* Body Content */}
                   <div className="p-4 space-y-3">
                     <div>
-                      <span className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider">
-                        {deal.brandName}
-                      </span>
+                      <div className="flex items-center justify-between gap-1 mb-1">
+                        <span className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider">
+                          {deal.brandName}
+                        </span>
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
+                          {dealTypeBadge.label}
+                        </span>
+                      </div>
                       <h3 className="font-bold text-plum-950 text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-lotus-700 transition-colors">
                         {deal.productName}
                       </h3>
@@ -499,6 +509,7 @@ export default function BuyerDealsPage() {
         <div className="space-y-4">
           {paginatedDeals.map((deal) => {
             const mkt = getMarketplaceInfo(deal.marketplace, deal.productLink);
+            const dealTypeBadge = getDealTypeBadge(deal.dealType);
             const ratingTotal = deal.ratingSlots || 1;
             const ratingRem = deal.remainingRating ?? 0;
             const reviewTotal = deal.reviewSlots || 1;
@@ -517,9 +528,12 @@ export default function BuyerDealsPage() {
                     <SafeImage src={deal.productImage} alt={deal.productName} fill className="object-contain p-2" />
                   </div>
                   <div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-2 flex-wrap">
                       <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black border uppercase ${mkt.bg}`}>
                         {mkt.label}
+                      </span>
+                      <span className={`px-2 py-0.5 rounded-lg text-[10px] font-black border ${dealTypeBadge.bg}`}>
+                        {dealTypeBadge.label}
                       </span>
                       <span className="font-mono text-[10px] text-gray-400">#{deal.productCode}</span>
                     </div>

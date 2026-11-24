@@ -120,7 +120,7 @@ export async function middleware(request: NextRequest) {
     }
     if (userRole !== "ADMIN") {
       // Redirect to authorized role dashboard
-      const dest = userRole === "PREMIUM_USER" ? "/mediator" : "/buyer";
+      const dest = userRole === "PREMIUM_USER" ? "/mediator" : "/buyer/deals";
       return NextResponse.redirect(new URL(dest, request.url));
     }
   }
@@ -133,7 +133,7 @@ export async function middleware(request: NextRequest) {
       return NextResponse.redirect(loginUrl);
     }
     if (userRole !== "PREMIUM_USER" && userRole !== "ADMIN") {
-      return NextResponse.redirect(new URL("/buyer", request.url));
+      return NextResponse.redirect(new URL("/buyer/deals", request.url));
     }
   }
 
@@ -169,7 +169,7 @@ export async function middleware(request: NextRequest) {
   // Redirect already-logged-in users from /login or /signup directly to their dashboard
   if (pathname === "/login" || pathname === "/signup") {
     if (token) {
-      let dest = "/buyer";
+      let dest = "/buyer/deals";
       if (userRole === "ADMIN") dest = "/admin";
       else if (userRole === "PREMIUM_USER") dest = "/mediator";
       return NextResponse.redirect(new URL(dest, request.url));

@@ -15,7 +15,29 @@ import {
   Share2,
   Sparkles,
   Zap,
+  Pencil,
+  Trash2,
 } from "lucide-react";
+
+export const getDealTypeBadge = (dealType?: string) => {
+  const type = dealType || "Original";
+  if (type === "Empty Box") {
+    return {
+      bg: "bg-rose-50 text-rose-700 border-rose-200",
+      label: "Empty Box",
+    };
+  }
+  if (type === "Exchange") {
+    return {
+      bg: "bg-amber-50 text-amber-700 border-amber-200",
+      label: "Exchange",
+    };
+  }
+  return {
+    bg: "bg-indigo-50 text-indigo-700 border-indigo-200",
+    label: "Original",
+  };
+};
 
 interface DealCardProps {
   deal: any;
@@ -24,6 +46,9 @@ interface DealCardProps {
   layout?: "column" | "row";
   onOpenMessageModal?: (deal: any) => void;
   onCopyAnnouncement?: (deal: any) => void;
+  onEdit?: (deal: any) => void;
+  onDelete?: (deal: any) => void;
+  isAdmin?: boolean;
 }
 
 export default function DealCard({
@@ -33,6 +58,9 @@ export default function DealCard({
   layout = "column",
   onOpenMessageModal,
   onCopyAnnouncement,
+  onEdit,
+  onDelete,
+  isAdmin = false,
 }: DealCardProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const isFull = (deal.remainingSlots ?? 0) <= 0;
@@ -78,6 +106,7 @@ export default function DealCard({
   };
 
   const mkt = getMarketplaceBadge(deal.marketplace);
+  const dealTypeBadge = getDealTypeBadge(deal.dealType);
 
   // Review & Rating slot percentages
   const ratingTotal = deal.ratingSlots || 1;
@@ -120,11 +149,18 @@ export default function DealCard({
 
           {/* Top Badges */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md border ${mkt.bg}`}
-            >
-              {mkt.label}
-            </span>
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md border ${mkt.bg}`}
+              >
+                {mkt.label}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider shadow-md border ${dealTypeBadge.bg}`}
+              >
+                {dealTypeBadge.label}
+              </span>
+            </div>
 
             {deal.pricingType === "LESS" ? (
               <span className="px-3 py-1 rounded-full bg-amber-500/90 backdrop-blur-md text-white text-[10px] font-black tracking-wide shadow-md border border-amber-300/40 flex items-center gap-1">
@@ -178,11 +214,9 @@ export default function DealCard({
                 <span className="font-mono text-[11px] font-bold text-gray-400 tracking-wider">
                   #{deal.productCode}
                 </span>
-                {deal.dealType && (
-                  <span className="text-[10px] font-bold text-plum-700 bg-plum-50 px-2.5 py-0.5 rounded-md border border-plum-100">
-                    {deal.dealType}
-                  </span>
-                )}
+                <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border ${dealTypeBadge.bg}`}>
+                  {dealTypeBadge.label}
+                </span>
               </div>
 
               {/* Price Strip */}
@@ -305,24 +339,48 @@ export default function DealCard({
               </a>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => onOpenMessageModal && onOpenMessageModal(deal)}
-                disabled={isFull}
-                className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-40"
-              >
-                <Share2 className="w-3.5 h-3.5 text-emerald-200" />
-                Order Message
-              </button>
+            <div className="flex items-center gap-2 flex-wrap">
+              {onEdit && (
+                <button
+                  onClick={() => onEdit(deal)}
+                  className="py-2 px-3.5 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 border border-plum-200 shadow-2xs hover:border-plum-300 active:scale-95"
+                >
+                  <Pencil className="w-3.5 h-3.5 text-plum-700" />
+                  Edit
+                </button>
+              )}
 
-              <button
-                onClick={() => onCopyAnnouncement && onCopyAnnouncement(deal)}
-                disabled={isFull}
-                className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-40"
-              >
-                <Megaphone className="w-3.5 h-3.5 text-plum-900" />
-                Announcement
-              </button>
+              {onDelete && (
+                <button
+                  onClick={() => onDelete(deal)}
+                  className="py-2 px-3.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 text-xs font-bold transition-all flex items-center gap-1.5 border border-red-200 shadow-2xs hover:border-red-300 active:scale-95"
+                >
+                  <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                  Delete
+                </button>
+              )}
+
+              {onOpenMessageModal && (
+                <button
+                  onClick={() => onOpenMessageModal(deal)}
+                  disabled={isFull}
+                  className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <Share2 className="w-3.5 h-3.5 text-emerald-200" />
+                  Order Message
+                </button>
+              )}
+
+              {onCopyAnnouncement && (
+                <button
+                  onClick={() => onCopyAnnouncement(deal)}
+                  disabled={isFull}
+                  className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center gap-1.5 disabled:opacity-40"
+                >
+                  <Megaphone className="w-3.5 h-3.5 text-plum-900" />
+                  Announcement
+                </button>
+              )}
             </div>
           </div>
         </div>
@@ -364,12 +422,19 @@ export default function DealCard({
 
           {/* Top Badges */}
           <div className="absolute top-3 left-3 right-3 flex items-center justify-between gap-2 z-10">
-            {/* Marketplace Badge */}
-            <span
-              className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md border ${mkt.bg}`}
-            >
-              {mkt.label}
-            </span>
+            {/* Marketplace Badge & Deal Type */}
+            <div className="flex items-center gap-1.5 flex-wrap">
+              <span
+                className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider shadow-md border ${mkt.bg}`}
+              >
+                {mkt.label}
+              </span>
+              <span
+                className={`px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider shadow-md border ${dealTypeBadge.bg}`}
+              >
+                {dealTypeBadge.label}
+              </span>
+            </div>
 
             {/* Pricing Model Pill */}
             {deal.pricingType === "LESS" ? (
@@ -425,11 +490,9 @@ export default function DealCard({
               <span className="font-mono text-[10px] font-bold text-gray-400 tracking-wider">
                 #{deal.productCode}
               </span>
-              {deal.dealType && (
-                <span className="text-[10px] font-bold text-plum-700 bg-plum-50 px-2 py-0.5 rounded-md">
-                  {deal.dealType}
-                </span>
-              )}
+              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
+                {dealTypeBadge.label}
+              </span>
             </div>
             <h3 className="font-bold text-plum-950 text-sm mt-1 line-clamp-2 leading-snug group-hover:text-lotus-700 transition-colors">
               {deal.productName}
@@ -520,26 +583,57 @@ export default function DealCard({
 
       {/* Action Buttons Hub matching ZMA */}
       <div className="p-4 pt-0 space-y-2.5">
-        {/* WhatsApp Pitch Generators */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={() => onOpenMessageModal && onOpenMessageModal(deal)}
-            disabled={isFull}
-            className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
-          >
-            <Share2 className="w-3.5 h-3.5 text-emerald-200" />
-            Order Message
-          </button>
+        {/* Admin Quick Action Controls */}
+        {(onEdit || onDelete) && (
+          <div className="grid grid-cols-2 gap-2">
+            {onEdit && (
+              <button
+                onClick={() => onEdit(deal)}
+                className="py-2.5 px-3 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 font-bold text-xs border border-plum-200/90 shadow-2xs hover:border-plum-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <Pencil className="w-3.5 h-3.5 text-plum-700" />
+                Edit Deal
+              </button>
+            )}
 
-          <button
-            onClick={() => onCopyAnnouncement && onCopyAnnouncement(deal)}
-            disabled={isFull}
-            className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
-          >
-            <Megaphone className="w-3.5 h-3.5 text-plum-900" />
-            Announcement
-          </button>
-        </div>
+            {onDelete && (
+              <button
+                onClick={() => onDelete(deal)}
+                className="py-2.5 px-3 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 font-bold text-xs border border-red-200/90 shadow-2xs hover:border-red-300 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <Trash2 className="w-3.5 h-3.5 text-red-600" />
+                Delete
+              </button>
+            )}
+          </div>
+        )}
+
+        {/* WhatsApp Pitch Generators */}
+        {(onOpenMessageModal || onCopyAnnouncement) && (
+          <div className="grid grid-cols-2 gap-2">
+            {onOpenMessageModal && (
+              <button
+                onClick={() => onOpenMessageModal(deal)}
+                disabled={isFull}
+                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Share2 className="w-3.5 h-3.5 text-emerald-200" />
+                Order Message
+              </button>
+            )}
+
+            {onCopyAnnouncement && (
+              <button
+                onClick={() => onCopyAnnouncement(deal)}
+                disabled={isFull}
+                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+              >
+                <Megaphone className="w-3.5 h-3.5 text-plum-900" />
+                Announcement
+              </button>
+            )}
+          </div>
+        )}
 
         {/* Quick Link Actions */}
         <div className="grid grid-cols-2 gap-2">
