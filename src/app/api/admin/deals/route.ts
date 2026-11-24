@@ -37,9 +37,13 @@ export async function POST(req: NextRequest) {
       reviewSlots,
       ratingSlots,
       dealType,
+      description,
+      whatsappNumber,
+      whatsappMessage,
     } = body;
 
-    if (!brandName || !productName || !productCode || !price) {
+    const isNoInvestment = dealType === "No Investment";
+    if (!brandName || !productName || !productCode || (price === undefined || price === null || price === "")) {
       return NextResponse.json({ error: "Required fields missing" }, { status: 400 });
     }
 
@@ -61,8 +65,8 @@ export async function POST(req: NextRequest) {
       marketplace: marketplace || "Amazon",
       productLink: productLink || "",
       productImage: productImage || "",
-      price: Number(price),
-      pricingType: pricingType || "FULL_REFUND",
+      price: Number(price) || 0,
+      pricingType: isNoInvestment ? "FULL_REFUND" : (pricingType || "FULL_REFUND"),
       lessAmount: Number(lessAmount) || 0,
       commissionAmount: Number(commissionAmount) || 0,
       totalSlots,
@@ -72,6 +76,9 @@ export async function POST(req: NextRequest) {
       ratingSlots: ratSlots,
       remainingRating: ratSlots,
       dealType: dealType || "Original",
+      description: description || "",
+      whatsappNumber: whatsappNumber || "",
+      whatsappMessage: whatsappMessage || "Hey, I want to take the No Investment Deal. Please share details!",
       isActive: true,
     });
 
@@ -125,6 +132,9 @@ export async function PATCH(req: NextRequest) {
     if (updateData.lessAmount !== undefined) deal.lessAmount = Number(updateData.lessAmount) || 0;
     if (updateData.commissionAmount !== undefined) deal.commissionAmount = Number(updateData.commissionAmount) || 0;
     if (updateData.dealType !== undefined) deal.dealType = updateData.dealType;
+    if (updateData.description !== undefined) deal.description = updateData.description;
+    if (updateData.whatsappNumber !== undefined) deal.whatsappNumber = updateData.whatsappNumber;
+    if (updateData.whatsappMessage !== undefined) deal.whatsappMessage = updateData.whatsappMessage;
     if (updateData.isActive !== undefined) deal.isActive = Boolean(updateData.isActive);
 
     // Relist Mode: Admin adds fresh custom stock to completed/archived deal

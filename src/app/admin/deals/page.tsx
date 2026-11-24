@@ -57,6 +57,9 @@ export default function AdminDealsPage() {
     reviewSlots: "10",
     ratingSlots: "10",
     dealType: "Original",
+    description: "",
+    whatsappNumber: "",
+    whatsappMessage: "Hey, I want to take the No Investment Deal. Please share details!",
   });
 
   const resetForm = () => {
@@ -74,6 +77,9 @@ export default function AdminDealsPage() {
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: "Original",
+      description: "",
+      whatsappNumber: "",
+      whatsappMessage: "Hey, I want to take the No Investment Deal. Please share details!",
     });
     setEditingDealId(null);
     setModalMode("create");
@@ -101,6 +107,9 @@ export default function AdminDealsPage() {
       reviewSlots: deal.reviewSlots !== undefined ? String(deal.reviewSlots) : "10",
       ratingSlots: deal.ratingSlots !== undefined ? String(deal.ratingSlots) : "10",
       dealType: deal.dealType || "Original",
+      description: deal.description || "",
+      whatsappNumber: deal.whatsappNumber || "",
+      whatsappMessage: deal.whatsappMessage || "Hey, I want to take the No Investment Deal. Please share details!",
     });
     setShowModal(true);
   };
@@ -122,6 +131,9 @@ export default function AdminDealsPage() {
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: deal.dealType || "Original",
+      description: deal.description || "",
+      whatsappNumber: deal.whatsappNumber || "",
+      whatsappMessage: deal.whatsappMessage || "Hey, I want to take the No Investment Deal. Please share details!",
     });
     setShowModal(true);
   };
@@ -596,7 +608,7 @@ export default function AdminDealsPage() {
                     Selected: <strong className="text-plum-950 font-black">{formData.dealType}</strong>
                   </span>
                 </div>
-                <div className="grid grid-cols-3 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                   {[
                     {
                       id: "Original",
@@ -619,11 +631,27 @@ export default function AdminDealsPage() {
                       active: "bg-rose-600 text-white shadow-md shadow-rose-600/20 border-rose-600",
                       inactive: "bg-white text-rose-950 border-rose-100 hover:bg-rose-50/60",
                     },
+                    {
+                      id: "No Investment",
+                      label: "No Investment",
+                      desc: "₹0 Upfront • Take Deal",
+                      active: "bg-gradient-to-r from-emerald-600 to-teal-700 text-white shadow-md shadow-emerald-700/25 border-emerald-600 font-black",
+                      inactive: "bg-white text-emerald-950 border-emerald-200 hover:bg-emerald-50/70",
+                    },
                   ].map((dt) => (
                     <button
                       key={dt.id}
                       type="button"
-                      onClick={() => setFormData({ ...formData, dealType: dt.id })}
+                      onClick={() => {
+                        const updates: any = { dealType: dt.id };
+                        if (dt.id === "No Investment") {
+                          if (!formData.productName) updates.productName = "No Investment Deal";
+                          if (!formData.price) updates.price = "0";
+                          if (!formData.pricingType) updates.pricingType = "FULL_REFUND";
+                          if (!formData.productCode) updates.productCode = "NOINV-" + Date.now().toString().slice(-4);
+                        }
+                        setFormData({ ...formData, ...updates });
+                      }}
                       className={`p-2.5 sm:p-3 rounded-2xl border text-left transition-all ${
                         formData.dealType === dt.id ? dt.active : dt.inactive
                       }`}
@@ -640,6 +668,62 @@ export default function AdminDealsPage() {
                   ))}
                 </div>
               </div>
+
+              {/* Special No Investment Deal Configuration */}
+              {formData.dealType === "No Investment" && (
+                <div className="p-4 rounded-2xl bg-gradient-to-br from-emerald-50/90 via-teal-50/50 to-white border border-emerald-300 space-y-3 shadow-xs">
+                  <div className="flex items-center gap-2 pb-2 border-b border-emerald-200">
+                    <Sparkles className="w-4 h-4 text-emerald-600" />
+                    <span className="text-xs font-black text-emerald-950 uppercase tracking-wider">
+                      Special No Investment Deal Settings
+                    </span>
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 font-bold border border-emerald-200">
+                      Redirects to Admin WhatsApp
+                    </span>
+                  </div>
+
+                  <div>
+                    <label className="block text-xs font-bold text-emerald-950 mb-1">
+                      Special Deal Description & Instructions * <span className="text-gray-400 font-normal text-[10px]">(Visible on special deal card)</span>
+                    </label>
+                    <textarea
+                      rows={3}
+                      value={formData.description}
+                      onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                      placeholder="e.g. Exclusive zero investment campaign. No upfront payment required from user! Contact administration on WhatsApp to reserve deal slot."
+                      className="w-full p-2.5 rounded-xl border border-emerald-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white text-gray-800 font-medium"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-xs font-bold text-emerald-950 mb-1">
+                        Admin WhatsApp Number <span className="text-gray-400 font-normal text-[10px]">(For Take Deal)</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.whatsappNumber}
+                        onChange={(e) => setFormData({ ...formData, whatsappNumber: e.target.value })}
+                        placeholder="e.g. 919876543210 (Default: Admin Mobile)"
+                        className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white font-mono"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-xs font-bold text-emerald-950 mb-1">
+                        Pre-configured WhatsApp Message
+                      </label>
+                      <input
+                        type="text"
+                        value={formData.whatsappMessage}
+                        onChange={(e) => setFormData({ ...formData, whatsappMessage: e.target.value })}
+                        placeholder="Hey, I want to take the No Investment Deal. Please share details!"
+                        className="w-full px-3 py-2 rounded-xl border border-emerald-200 text-xs focus:outline-none focus:ring-2 focus:ring-emerald-400 bg-white"
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>

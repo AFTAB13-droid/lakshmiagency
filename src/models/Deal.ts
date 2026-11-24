@@ -31,7 +31,10 @@ export interface IDeal extends Document {
   feedbackSlots: number;
   remainingFeedback: number;
 
-  dealType: "Original" | "Empty Box" | "Exchange";
+  dealType: "Original" | "Empty Box" | "Exchange" | "No Investment";
+  description?: string;
+  whatsappNumber?: string;
+  whatsappMessage?: string;
   assignedMediators?: mongoose.Types.ObjectId[];
   isActive: boolean;
   userRemarks?: string;
@@ -73,7 +76,10 @@ const DealSchema = new Schema<IDeal>(
     feedbackSlots: { type: Number, default: 0 },
     remainingFeedback: { type: Number, default: 0 },
 
-    dealType: { type: String, enum: ["Original", "Empty Box", "Exchange"], default: "Original" },
+    dealType: { type: String, enum: ["Original", "Empty Box", "Exchange", "No Investment"], default: "Original" },
+    description: { type: String, default: "" },
+    whatsappNumber: { type: String, default: "" },
+    whatsappMessage: { type: String, default: "Hey, I want to take the No Investment Deal. Please share details!" },
     assignedMediators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     isActive: { type: Boolean, default: true },
     userRemarks: { type: String, default: "" },

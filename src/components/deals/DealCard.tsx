@@ -18,6 +18,7 @@ import {
   Pencil,
   Trash2,
   RefreshCw,
+  MessageCircle,
 } from "lucide-react";
 
 export const getDealTypeBadge = (dealType?: string) => {
@@ -32,6 +33,12 @@ export const getDealTypeBadge = (dealType?: string) => {
     return {
       bg: "bg-amber-50 text-amber-700 border-amber-200",
       label: "Exchange",
+    };
+  }
+  if (type === "No Investment" || type === "No Investment Deal") {
+    return {
+      bg: "bg-gradient-to-r from-emerald-600 to-teal-700 text-white border-emerald-500 font-black shadow-xs",
+      label: "💎 No Investment Deal",
     };
   }
   return {
@@ -119,6 +126,14 @@ export default function DealCard({
   const reviewTotal = deal.reviewSlots || 1;
   const reviewRem = deal.remainingReview ?? 0;
   const reviewPercent = Math.min(100, Math.max(0, (reviewRem / reviewTotal) * 100));
+
+  const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
+  const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
+  const adminPhone = rawAdminPhone.length === 10 ? "91" + rawAdminPhone : rawAdminPhone;
+  const whatsappPreMsg =
+    deal.whatsappMessage ||
+    `Hey, I want to take the No Investment Deal. Please share details!`;
+  const takeDealUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(whatsappPreMsg)}`;
 
   // =========================================================================
   // ROW VIEW (HORIZONTAL WIDE LUXURY CARD)
@@ -255,6 +270,18 @@ export default function DealCard({
             <h3 className="font-bold text-plum-950 text-base sm:text-lg mt-2 group-hover:text-lotus-700 transition-colors leading-snug">
               {deal.productName}
             </h3>
+
+            {deal.description && (
+              <div className="mt-2.5 p-3 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 border border-emerald-200 text-emerald-950 text-xs shadow-2xs space-y-1">
+                <div className="flex items-center gap-1.5 font-black text-[10px] text-emerald-800 uppercase tracking-wider">
+                  <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                  Special Deal Details
+                </div>
+                <p className="text-[11px] leading-relaxed font-medium text-emerald-900 whitespace-pre-line">
+                  {deal.description}
+                </p>
+              </div>
+            )}
           </div>
 
           {/* Granular Feedback Slots Meter */}
@@ -312,45 +339,68 @@ export default function DealCard({
 
           {/* Action Buttons Hub */}
           <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
-            <div className="flex flex-wrap items-center gap-2">
-              <button
-                onClick={handleCopyLink}
-                disabled={isFull}
-                className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-40"
-              >
-                {copiedLink ? (
-                  <>
-                    <Check className="w-3.5 h-3.5 text-emerald-600" />
-                    <span className="text-emerald-700">Copied!</span>
-                  </>
+            {isNoInvestment ? (
+              <div className="flex items-center gap-2">
+                {isFull ? (
+                  <button
+                    disabled
+                    className="py-2.5 px-4 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed"
+                  >
+                    Slots Closed (Completed)
+                  </button>
                 ) : (
-                  <>
-                    <Copy className="w-3.5 h-3.5 text-plum-600" />
-                    Copy Form Link
-                  </>
+                  <a
+                    href={takeDealUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 uppercase tracking-wider"
+                  >
+                    <MessageCircle className="w-4 h-4 text-emerald-200" />
+                    Take Deal (WhatsApp) →
+                  </a>
                 )}
-              </button>
-
-              {isFull ? (
+              </div>
+            ) : (
+              <div className="flex flex-wrap items-center gap-2">
                 <button
-                  disabled
-                  className="py-2 px-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-not-allowed shadow-none"
-                  title="Slots completed. Form is closed."
+                  onClick={handleCopyLink}
+                  disabled={isFull}
+                  className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs disabled:opacity-40"
                 >
-                  Slots Closed
+                  {copiedLink ? (
+                    <>
+                      <Check className="w-3.5 h-3.5 text-emerald-600" />
+                      <span className="text-emerald-700">Copied!</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="w-3.5 h-3.5 text-plum-600" />
+                      Copy Form Link
+                    </>
+                  )}
                 </button>
-              ) : (
-                <a
-                  href={prefilledUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
-                >
-                  <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
-                  Open Form
-                </a>
-              )}
-            </div>
+
+                {isFull ? (
+                  <button
+                    disabled
+                    className="py-2 px-3 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-xs font-bold transition-all flex items-center gap-1.5 cursor-not-allowed shadow-none"
+                    title="Slots completed. Form is closed."
+                  >
+                    Slots Closed
+                  </button>
+                ) : (
+                  <a
+                    href={prefilledUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-3 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-xs font-bold transition-all flex items-center gap-1.5 shadow-xs"
+                  >
+                    <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
+                    Open Form
+                  </a>
+                )}
+              </div>
+            )}
 
             <div className="flex items-center gap-2 flex-wrap">
               {onRelist && isFull && (
@@ -522,6 +572,18 @@ export default function DealCard({
             </h3>
           </div>
 
+          {deal.description && (
+            <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 border border-emerald-200 text-emerald-950 text-xs shadow-2xs space-y-1">
+              <div className="flex items-center gap-1.5 font-black text-[10px] text-emerald-800 uppercase tracking-wider">
+                <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                Special Deal Details
+              </div>
+              <p className="text-[11px] leading-relaxed font-medium text-emerald-900 whitespace-pre-line">
+                {deal.description}
+              </p>
+            </div>
+          )}
+
           {/* Pricing Highlight Strip */}
           <div className="p-3.5 rounded-2xl bg-gradient-to-r from-plum-50/70 via-lotus-50/40 to-gold-50/30 border border-plum-100 flex items-center justify-between">
             <div>
@@ -643,73 +705,99 @@ export default function DealCard({
           </div>
         )}
 
-        {/* WhatsApp Pitch Generators */}
-        {(onOpenMessageModal || onCopyAnnouncement) && (
-          <div className="grid grid-cols-2 gap-2">
-            {onOpenMessageModal && (
+        {/* Special No Investment Action vs Standard Actions */}
+        {isNoInvestment ? (
+          <div className="space-y-2">
+            {isFull ? (
               <button
-                onClick={() => onOpenMessageModal(deal)}
-                disabled={isFull}
-                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+                disabled
+                className="w-full py-3 px-3 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed flex items-center justify-center gap-1.5"
               >
-                <Share2 className="w-3.5 h-3.5 text-emerald-200" />
-                Order Message
+                Slots Closed (Completed)
               </button>
-            )}
-
-            {onCopyAnnouncement && (
-              <button
-                onClick={() => onCopyAnnouncement(deal)}
-                disabled={isFull}
-                className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+            ) : (
+              <a
+                href={takeDealUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wider text-center"
               >
-                <Megaphone className="w-3.5 h-3.5 text-plum-900" />
-                Announcement
-              </button>
+                <MessageCircle className="w-4 h-4 text-emerald-200" />
+                Take Deal (WhatsApp) →
+              </a>
             )}
           </div>
-        )}
+        ) : (
+          <>
+            {/* WhatsApp Pitch Generators */}
+            {(onOpenMessageModal || onCopyAnnouncement) && (
+              <div className="grid grid-cols-2 gap-2">
+                {onOpenMessageModal && (
+                  <button
+                    onClick={() => onOpenMessageModal(deal)}
+                    disabled={isFull}
+                    className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-black text-xs shadow-md shadow-emerald-700/20 hover:from-emerald-500 hover:to-emerald-600 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    <Share2 className="w-3.5 h-3.5 text-emerald-200" />
+                    Order Message
+                  </button>
+                )}
 
-        {/* Quick Link Actions */}
-        <div className="grid grid-cols-2 gap-2">
-          <button
-            onClick={handleCopyLink}
-            disabled={isFull}
-            className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 shadow-xs"
-          >
-            {copiedLink ? (
-              <>
-                <Check className="w-3.5 h-3.5 text-emerald-600" />
-                <span className="text-emerald-700">Copied!</span>
-              </>
-            ) : (
-              <>
-                <Copy className="w-3.5 h-3.5 text-plum-600" />
-                Copy Form Link
-              </>
+                {onCopyAnnouncement && (
+                  <button
+                    onClick={() => onCopyAnnouncement(deal)}
+                    disabled={isFull}
+                    className="py-2.5 px-3 rounded-xl bg-gradient-to-r from-gold-500 to-amber-600 text-plum-950 font-black text-xs shadow-md shadow-gold-600/20 hover:from-gold-400 hover:to-amber-500 active:scale-95 transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none"
+                  >
+                    <Megaphone className="w-3.5 h-3.5 text-plum-900" />
+                    Announcement
+                  </button>
+                )}
+              </div>
             )}
-          </button>
 
-          {isFull ? (
-            <button
-              disabled
-              className="py-2 px-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-not-allowed shadow-none"
-              title="All slots completed. Form submissions are closed."
-            >
-              Slots Closed
-            </button>
-          ) : (
-            <a
-              href={prefilledUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
-            >
-              <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
-              Open Form
-            </a>
-          )}
-        </div>
+            {/* Quick Link Actions */}
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                onClick={handleCopyLink}
+                disabled={isFull}
+                className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 disabled:opacity-40 shadow-xs"
+              >
+                {copiedLink ? (
+                  <>
+                    <Check className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-emerald-700">Copied!</span>
+                  </>
+                ) : (
+                  <>
+                    <Copy className="w-3.5 h-3.5 text-plum-600" />
+                    Copy Form Link
+                  </>
+                )}
+              </button>
+
+              {isFull ? (
+                <button
+                  disabled
+                  className="py-2 px-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 cursor-not-allowed shadow-none"
+                  title="All slots completed. Form submissions are closed."
+                >
+                  Slots Closed
+                </button>
+              ) : (
+                <a
+                  href={prefilledUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1.5 shadow-xs"
+                >
+                  <ExternalLink className="w-3.5 h-3.5 text-plum-600" />
+                  Open Form
+                </a>
+              )}
+            </div>
+          </>
+        )}
       </div>
     </motion.div>
   );

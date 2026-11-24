@@ -25,6 +25,7 @@ import {
   LayoutGrid,
   Rows,
   Layers,
+  MessageCircle,
 } from "lucide-react";
 
 export default function BuyerDealsPage() {
@@ -332,6 +333,14 @@ export default function BuyerDealsPage() {
             const reviewRem = deal.remainingReview ?? 0;
             const reviewPercent = Math.min(100, Math.max(0, (reviewRem / reviewTotal) * 100));
 
+            const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
+            const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
+            const adminPhone = rawAdminPhone.length === 10 ? "91" + rawAdminPhone : rawAdminPhone;
+            const whatsappPreMsg =
+              deal.whatsappMessage ||
+              "Hey, I want to take the No Investment Deal. Please share details!";
+            const takeDealUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(whatsappPreMsg)}`;
+
             return (
               <motion.div
                 key={deal._id}
@@ -405,6 +414,18 @@ export default function BuyerDealsPage() {
                       </h3>
                     </div>
 
+                    {deal.description && (
+                      <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 border border-emerald-200 text-emerald-950 text-xs shadow-2xs space-y-1">
+                        <div className="flex items-center gap-1.5 font-black text-[10px] text-emerald-800 uppercase tracking-wider">
+                          <Sparkles className="w-3.5 h-3.5 text-emerald-600" />
+                          Special Deal Details
+                        </div>
+                        <p className="text-[11px] leading-relaxed font-medium text-emerald-900 whitespace-pre-line">
+                          {deal.description}
+                        </p>
+                      </div>
+                    )}
+
                     {/* Pricing */}
                     <div className="p-2.5 rounded-2xl bg-[#FAF5F8] border border-plum-100/70 flex items-center justify-between">
                       <div>
@@ -456,66 +477,89 @@ export default function BuyerDealsPage() {
                   </div>
                 </div>
 
-                {/* 3 Direct Buyer Action Buttons (No pitch/announcement) */}
+                {/* Direct Buyer Action Buttons */}
                 <div className="p-4 pt-0 space-y-2">
-                  {/* Buy on Marketplace Product Link */}
-                  {isFull ? (
-                    <button
-                      disabled
-                      className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed shadow-none flex items-center justify-center gap-1.5"
-                    >
-                      Offer Closed (Slots Completed)
-                    </button>
-                  ) : deal.productLink ? (
-                    <a
-                      href={deal.productLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`w-full py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95 ${mkt.btnBg}`}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
-                      Buy on {mkt.label} →
-                    </a>
-                  ) : (
-                    <div className="text-center py-2 text-[10px] text-gray-400 italic">
-                      Direct product link available via mediator pitch
-                    </div>
-                  )}
-
-                  {/* Order Form & Refund Form Actions */}
-                  <div className="grid grid-cols-2 gap-2">
-                    {isFull ? (
+                  {isNoInvestment ? (
+                    isFull ? (
                       <button
                         disabled
-                        className="py-2 px-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-not-allowed shadow-none"
-                        title="Deal slots completed. Form closed."
+                        className="w-full py-3 px-3 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed flex items-center justify-center gap-1.5"
                       >
-                        Slots Closed
+                        Slots Closed (Completed)
                       </button>
                     ) : (
                       <a
-                        href={getOrderFormUrl(deal)}
+                        href={takeDealUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1 shadow-xs"
-                        title="Fill Google Order Form for this deal"
+                        className="w-full py-3 px-4 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-lg shadow-emerald-700/25 flex items-center justify-center gap-2 transition-all hover:scale-[1.02] active:scale-95 uppercase tracking-wider text-center"
                       >
-                        <ExternalLink className="w-3 h-3 text-plum-600" />
-                        Order Form
+                        <MessageCircle className="w-4 h-4 text-emerald-200" />
+                        Take Deal (WhatsApp) →
                       </a>
-                    )}
+                    )
+                  ) : (
+                    <>
+                      {/* Buy on Marketplace Product Link */}
+                      {isFull ? (
+                        <button
+                          disabled
+                          className="w-full py-2.5 px-3 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed shadow-none flex items-center justify-center gap-1.5"
+                        >
+                          Offer Closed (Slots Completed)
+                        </button>
+                      ) : deal.productLink ? (
+                        <a
+                          href={deal.productLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`w-full py-2.5 px-3 rounded-xl font-black text-xs shadow-md flex items-center justify-center gap-1.5 transition-all hover:scale-[1.02] active:scale-95 ${mkt.btnBg}`}
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
+                          Buy on {mkt.label} →
+                        </a>
+                      ) : (
+                        <div className="text-center py-2 text-[10px] text-gray-400 italic">
+                          Direct product link available via mediator pitch
+                        </div>
+                      )}
 
-                    <a
-                      href={getRefundFormUrl(deal)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="py-2 px-2.5 rounded-xl border border-lotus-200 bg-lotus-50/50 hover:bg-lotus-100/70 text-lotus-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1 shadow-xs"
-                      title="Fill Google Refund Form for this deal"
-                    >
-                      <RotateCcw className="w-3 h-3 text-lotus-600" />
-                      Refund Form
-                    </a>
-                  </div>
+                      {/* Order Form & Refund Form Actions */}
+                      <div className="grid grid-cols-2 gap-2">
+                        {isFull ? (
+                          <button
+                            disabled
+                            className="py-2 px-2.5 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 text-[11px] font-bold transition-all flex items-center justify-center gap-1 cursor-not-allowed shadow-none"
+                            title="Deal slots completed. Form closed."
+                          >
+                            Slots Closed
+                          </button>
+                        ) : (
+                          <a
+                            href={getOrderFormUrl(deal)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="py-2 px-2.5 rounded-xl border border-plum-200 bg-white hover:bg-plum-50/70 text-plum-900 text-[11px] font-bold transition-all flex items-center justify-center gap-1 shadow-xs"
+                            title="Fill Google Order Form for this deal"
+                          >
+                            <ExternalLink className="w-3 h-3 text-plum-600" />
+                            Order Form
+                          </a>
+                        )}
+
+                        <a
+                          href={getRefundFormUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="py-2 px-2.5 rounded-xl border border-lotus-200 bg-lotus-50/50 hover:bg-lotus-100/70 text-lotus-800 text-[11px] font-bold transition-all flex items-center justify-center gap-1 shadow-xs"
+                          title="Fill Google Refund Form for this deal"
+                        >
+                          <RotateCcw className="w-3 h-3 text-lotus-600" />
+                          Refund Form
+                        </a>
+                      </div>
+                    </>
+                  )}
                 </div>
               </motion.div>
             );
@@ -532,6 +576,14 @@ export default function BuyerDealsPage() {
             const ratingRem = deal.remainingRating ?? 0;
             const reviewTotal = deal.reviewSlots || 1;
             const reviewRem = deal.remainingReview ?? 0;
+
+            const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
+            const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
+            const adminPhone = rawAdminPhone.length === 10 ? "91" + rawAdminPhone : rawAdminPhone;
+            const whatsappPreMsg =
+              deal.whatsappMessage ||
+              "Hey, I want to take the No Investment Deal. Please share details!";
+            const takeDealUrl = `https://wa.me/${adminPhone}?text=${encodeURIComponent(whatsappPreMsg)}`;
 
             return (
               <motion.div
@@ -564,6 +616,17 @@ export default function BuyerDealsPage() {
                         Cashback: {deal.pricingType === "LESS" ? `-₹${deal.lessAmount}` : `₹${deal.price}`}
                       </span>
                     </div>
+                    {deal.description && (
+                      <div className="mt-2 p-2.5 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/50 to-emerald-50/90 border border-emerald-200 text-emerald-950 text-xs shadow-2xs space-y-0.5">
+                        <div className="flex items-center gap-1.5 font-black text-[10px] text-emerald-800 uppercase tracking-wider">
+                          <Sparkles className="w-3 h-3 text-emerald-600" />
+                          Special Deal Details
+                        </div>
+                        <p className="text-[11px] leading-relaxed font-medium text-emerald-900 line-clamp-2">
+                          {deal.description}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
 
@@ -581,53 +644,76 @@ export default function BuyerDealsPage() {
 
                 {/* Actions */}
                 <div className="flex flex-wrap items-center gap-2 w-full md:w-auto justify-end">
-                  {isFull ? (
-                    <button
-                      disabled
-                      className="px-4 py-2 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
-                    >
-                      Offer Closed (Slots Completed)
-                    </button>
-                  ) : deal.productLink ? (
-                    <a
-                      href={deal.productLink}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs ${mkt.btnBg}`}
-                    >
-                      <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
-                      Buy on {mkt.label} →
-                    </a>
-                  ) : null}
-
-                  {isFull ? (
-                    <button
-                      disabled
-                      className="px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 font-bold text-xs cursor-not-allowed"
-                    >
-                      Slots Closed
-                    </button>
+                  {isNoInvestment ? (
+                    isFull ? (
+                      <button
+                        disabled
+                        className="px-4 py-2.5 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
+                      >
+                        Slots Closed (Completed)
+                      </button>
+                    ) : (
+                      <a
+                        href={takeDealUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="py-2.5 px-5 rounded-xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 flex items-center gap-2 transition-all hover:scale-105 active:scale-95 uppercase tracking-wider"
+                      >
+                        <MessageCircle className="w-4 h-4 text-emerald-200" />
+                        Take Deal (WhatsApp) →
+                      </a>
+                    )
                   ) : (
-                    <a
-                      href={getOrderFormUrl(deal)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="px-3.5 py-2 rounded-xl border border-plum-200 bg-white hover:bg-plum-50 text-plum-900 font-bold text-xs flex items-center gap-1 transition-colors"
-                    >
-                      <ExternalLink className="w-3 h-3 text-plum-600" />
-                      Order Form
-                    </a>
-                  )}
+                    <>
+                      {isFull ? (
+                        <button
+                          disabled
+                          className="px-4 py-2 rounded-xl font-bold text-xs bg-gray-200 text-gray-500 cursor-not-allowed shadow-none"
+                        >
+                          Offer Closed (Slots Completed)
+                        </button>
+                      ) : deal.productLink ? (
+                        <a
+                          href={deal.productLink}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={`px-4 py-2 rounded-xl font-bold text-xs flex items-center gap-1.5 transition-colors shadow-xs ${mkt.btnBg}`}
+                        >
+                          <ShoppingBag className="w-3.5 h-3.5 text-gold-300" />
+                          Buy on {mkt.label} →
+                        </a>
+                      ) : null}
 
-                  <a
-                    href={getRefundFormUrl(deal)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="px-3.5 py-2 rounded-xl border border-lotus-200 bg-lotus-50 hover:bg-lotus-100 text-lotus-800 font-bold text-xs flex items-center gap-1 transition-colors"
-                  >
-                    <RotateCcw className="w-3 h-3 text-lotus-600" />
-                    Refund Form
-                  </a>
+                      {isFull ? (
+                        <button
+                          disabled
+                          className="px-3.5 py-2 rounded-xl border border-gray-200 bg-gray-100 text-gray-400 font-bold text-xs cursor-not-allowed"
+                        >
+                          Slots Closed
+                        </button>
+                      ) : (
+                        <a
+                          href={getOrderFormUrl(deal)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="px-3.5 py-2 rounded-xl border border-plum-200 bg-white hover:bg-plum-50 text-plum-900 font-bold text-xs flex items-center gap-1 transition-colors"
+                        >
+                          <ExternalLink className="w-3 h-3 text-plum-600" />
+                          Order Form
+                        </a>
+                      )}
+
+                      <a
+                        href={getRefundFormUrl(deal)}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="px-3.5 py-2 rounded-xl border border-lotus-200 bg-lotus-50 hover:bg-lotus-100 text-lotus-800 font-bold text-xs flex items-center gap-1 transition-colors"
+                      >
+                        <RotateCcw className="w-3 h-3 text-lotus-600" />
+                        Refund Form
+                      </a>
+                    </>
+                  )}
                 </div>
               </motion.div>
             );
