@@ -32,7 +32,12 @@ const FORM_TYPE = "AUTO";
  */
 function onFormSubmit(e) {
   try {
-    const sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
+    // CRITICAL: Always use e.range.getSheet() so multi-tab spreadsheets (Order + Refund in 1 file)
+    // read headers & row from the exact tab that received the submission!
+    const sheet =
+      e && e.range
+        ? e.range.getSheet()
+        : SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
     const headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
     const rowValues = e ? e.values : null;
     const rowIndex = e && e.range ? e.range.getRow() : sheet.getLastRow();
