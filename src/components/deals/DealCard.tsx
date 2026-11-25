@@ -57,10 +57,34 @@ export const formatPricingLabel = (
   return "100% Full Refund";
 };
 
+export const buildPrefilledOrderFormUrl = (
+  baseUrl?: string,
+  productCode?: string,
+  mediatorCode?: string,
+  productEntryId?: string,
+  mediatorEntryId?: string
+) => {
+  const base = baseUrl || "https://forms.gle/ydedLFJwcef59hPD7";
+  const normalizeEntry = (id?: string, fallback = "") => {
+    const clean = (id || "").trim();
+    if (!clean) return fallback;
+    return clean.startsWith("entry.") ? clean : `entry.${clean}`;
+  };
+  const pKey = normalizeEntry(productEntryId, "entry.product");
+  const mKey = normalizeEntry(mediatorEntryId, "entry.mediator");
+  const sep = base.includes("?") ? "&" : "?";
+  const params = [`usp=pp_url`];
+  if (productCode) params.push(`${pKey}=${encodeURIComponent(productCode)}`);
+  if (mediatorCode) params.push(`${mKey}=${encodeURIComponent(mediatorCode)}`);
+  return `${base}${sep}${params.join("&")}`;
+};
+
 interface DealCardProps {
   deal: any;
   mediatorCode?: string;
   orderFormUrl?: string;
+  orderFormProductEntryId?: string;
+  orderFormMediatorEntryId?: string;
   layout?: "column" | "row";
   onOpenMessageModal?: (deal: any) => void;
   onCopyAnnouncement?: (deal: any) => void;
@@ -74,6 +98,8 @@ export default function DealCard({
   deal,
   mediatorCode = "LAX096",
   orderFormUrl,
+  orderFormProductEntryId,
+  orderFormMediatorEntryId,
   layout = "column",
   onOpenMessageModal,
   onCopyAnnouncement,
@@ -85,11 +111,14 @@ export default function DealCard({
   const [copiedLink, setCopiedLink] = useState(false);
   const isFull = (deal.remainingSlots ?? 0) <= 0;
 
-  // Build prefilled Google Form URL
-  const baseForm = orderFormUrl || "https://forms.gle/ydedLFJwcef59hPD7";
-  const prefilledUrl = `${baseForm}?usp=pp_url&entry.product=${encodeURIComponent(
-    deal.productCode || ""
-  )}&entry.mediator=${encodeURIComponent(mediatorCode)}`;
+  // Build prefilled Google Form URL using real Entry IDs when configured
+  const prefilledUrl = buildPrefilledOrderFormUrl(
+    orderFormUrl,
+    deal.productCode,
+    mediatorCode,
+    orderFormProductEntryId,
+    orderFormMediatorEntryId
+  );
 
   const handleCopyLink = () => {
     navigator.clipboard.writeText(prefilledUrl);

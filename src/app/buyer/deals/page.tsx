@@ -7,7 +7,7 @@ import SafeImage from "@/components/common/SafeImage";
 import Pagination from "@/components/common/Pagination";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
 import CustomDropdown from "@/components/common/CustomDropdown";
-import { getDealTypeBadge, formatPricingLabel } from "@/components/deals/DealCard";
+import { getDealTypeBadge, formatPricingLabel, buildPrefilledOrderFormUrl } from "@/components/deals/DealCard";
 import {
   Tag,
   Search,
@@ -113,8 +113,13 @@ export default function BuyerDealsPage() {
 
   // Prefilled Form URLs
   const getOrderFormUrl = (deal: any) => {
-    const baseUrl = settings?.orderFormUrl || "https://forms.gle/ydedLFJwcef59hPD7";
-    return `${baseUrl}?usp=pp_url&entry.product=${encodeURIComponent(deal.productCode || "")}`;
+    return buildPrefilledOrderFormUrl(
+      settings?.orderFormUrl,
+      deal.productCode,
+      undefined,
+      settings?.orderFormProductEntryId,
+      settings?.orderFormMediatorEntryId
+    );
   };
 
   const getRefundFormUrl = (deal: any) => {

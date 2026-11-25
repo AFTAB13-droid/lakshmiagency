@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
-import DealCard from "@/components/deals/DealCard";
+import DealCard, { buildPrefilledOrderFormUrl } from "@/components/deals/DealCard";
 import Pagination from "@/components/common/Pagination";
 import {
   Tag,
@@ -70,8 +70,13 @@ export default function MediatorDealsPage() {
   }, [search, platformFilter, pricingFilter]);
 
   const getPrefilledOrderFormUrl = (productCode: string) => {
-    const baseFormUrl = settings?.orderFormUrl || "https://forms.gle/ydedLFJwcef59hPD7";
-    return `${baseFormUrl}?usp=pp_url&entry.product=${encodeURIComponent(productCode)}&entry.mediator=${encodeURIComponent(mediatorCode)}`;
+    return buildPrefilledOrderFormUrl(
+      settings?.orderFormUrl,
+      productCode,
+      mediatorCode,
+      settings?.orderFormProductEntryId,
+      settings?.orderFormMediatorEntryId
+    );
   };
 
   const handleOpenOrderMessage = (deal: any) => {
@@ -304,6 +309,8 @@ export default function MediatorDealsPage() {
                 layout="column"
                 mediatorCode={mediatorCode}
                 orderFormUrl={settings?.orderFormUrl}
+                orderFormProductEntryId={settings?.orderFormProductEntryId}
+                orderFormMediatorEntryId={settings?.orderFormMediatorEntryId}
                 onOpenMessageModal={handleOpenOrderMessage}
                 onCopyAnnouncement={handleOpenAnnouncement}
               />
@@ -333,6 +340,8 @@ export default function MediatorDealsPage() {
                 layout="row"
                 mediatorCode={mediatorCode}
                 orderFormUrl={settings?.orderFormUrl}
+                orderFormProductEntryId={settings?.orderFormProductEntryId}
+                orderFormMediatorEntryId={settings?.orderFormMediatorEntryId}
                 onOpenMessageModal={handleOpenOrderMessage}
                 onCopyAnnouncement={handleOpenAnnouncement}
               />

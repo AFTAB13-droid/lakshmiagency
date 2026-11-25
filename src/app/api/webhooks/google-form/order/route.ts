@@ -5,6 +5,11 @@ import { Deal } from "@/models/Deal";
 import { User, UserRole } from "@/models/User";
 import { Notification } from "@/models/Notification";
 import { Brand } from "@/models/Brand";
+import {
+  resolveMediatorFromInput,
+  findOrderByNormalizedId,
+  calculateDealPayout,
+} from "@/lib/webhookHelpers";
 
 const EXPECTED_SECRET = process.env.GOOGLE_WEBHOOK_SECRET || "lakshmi_agency_secure_webhook_token_2026";
 
@@ -123,8 +128,8 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    // Check if order already exists
-    const existingOrder = await Order.findOne({ marketplaceOrderId: orderId });
+    // Check if order already exists (normalized)
+    const existingOrder = await findOrderByNormalizedId(orderId);
     if (existingOrder) {
       return NextResponse.json({ message: "Order already registered", orderId: existingOrder._id }, { status: 200 });
     }
@@ -269,13 +274,7 @@ export async function POST(req: NextRequest) {
     // =========================================================================
     // 4. Resolve Mediator & Buyer (Registered or Unregistered)
     // =========================================================================
-    let mediatorUser = null;
-    if (mediatorCode) {
-      mediatorUser = await User.findOne({
-        role: UserRole.PREMIUM_USER,
-        mediatorCode: mediatorCode.toUpperCase(),
-      });
-    }
+    const { mediatorUser, resolvedMediatorCode } = await resolveMediatorFromInput(mediatorCode);
 
     let registeredBuyer = null;
     const buyerConditions = [];
@@ -365,22 +364,25 @@ export async function POST(req: NextRequest) {
       ? "OVERBOOKED: All available review slots for this deal were completed prior to submission."
       : "";
 
+    const isRatingSlot = Boolean(slotTypeInput && slotTypeInput.toLowerCase().includes("rating"));
+    const computedPayout = calculateDealPayout(deal, isRatingSlot);
+
     const newOrder = await Order.create({
-      marketplaceOrderId: orderId,
+      marketplaceOrderId: orderId.trim(),
       dealId: deal?._id,
       productCode: deal?.productCode || (productCode ? productCode.toUpperCase() : "GENERAL"),
       productName: deal?.productName || productNameInput || "Marketplace Product",
       brandName: resolvedBrandName,
       marketplace: deal?.marketplace || "Amazon",
       amount: deal?.price || 0,
-      payoutAmount: deal?.lessAmount || 0,
+      payoutAmount: computedPayout,
       buyer: registeredBuyer?._id,
       buyerName,
       buyerPhone,
       buyerEmail,
       orderScreenshotUrl: screenshot,
       mediator: mediatorUser?._id,
-      mediatorCode: mediatorCode ? mediatorCode.toUpperCase() : "DIRECT",
+      mediatorCode: resolvedMediatorCode,
       status: orderStatus,
       rejectionReason,
       notes: isOverbooked ? "Order rejected because deal inventory was 0." : "",

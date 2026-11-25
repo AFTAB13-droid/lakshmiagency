@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import { Order, OrderStatus } from "@/models/Order";
 import { Notification } from "@/models/Notification";
 import { addWorkingDays } from "@/lib/workingDays";
+import { findOrderByNormalizedId, resolveMediatorFromInput } from "@/lib/webhookHelpers";
 
 const EXPECTED_SECRET = process.env.GOOGLE_WEBHOOK_SECRET || "lakshmi_agency_secure_webhook_token_2026";
 
@@ -31,6 +32,7 @@ export async function POST(req: NextRequest) {
     const upiId = findField(["upi", "gpay", "phonepe", "paytm", "vpa"]);
     const reviewProof = findField(["review screenshot", "review proof", "screenshot", "drive", "file", "rating"]);
     const bankDetails = findField(["bank", "account number", "ifsc"]);
+    const mediatorInput = findField(["mediator", "agent", "lax", "premium user", "referral"]);
 
     if (!orderId) {
       return NextResponse.json({ error: "Order ID is required to map refund form" }, { status: 400 });
@@ -38,7 +40,7 @@ export async function POST(req: NextRequest) {
 
     await connectToDatabase();
 
-    const order = await Order.findOne({ marketplaceOrderId: orderId });
+    const order = await findOrderByNormalizedId(orderId);
     if (!order) {
       return NextResponse.json({
         warning: "Order ID not found in database. Please verify Order ID.",
@@ -72,6 +74,17 @@ export async function POST(req: NextRequest) {
     }
     if (upiId || bankDetails) {
       order.notes = `Payout Details: UPI=${upiId || "N/A"}, Bank=${bankDetails || "N/A"}`;
+    }
+
+    // Attempt to link mediator if not already linked on Order Form
+    if ((!order.mediator || order.mediatorCode === "DIRECT") && mediatorInput) {
+      const { mediatorUser, resolvedMediatorCode } = await resolveMediatorFromInput(mediatorInput);
+      if (mediatorUser) {
+        order.mediator = mediatorUser._id;
+        order.mediatorCode = resolvedMediatorCode;
+      } else if (resolvedMediatorCode !== "DIRECT") {
+        order.mediatorCode = resolvedMediatorCode;
+      }
     }
 
     // Attempt to link buyer if not already linked

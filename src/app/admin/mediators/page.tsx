@@ -36,6 +36,7 @@ import {
   Tag,
   Trash2,
   SlidersHorizontal,
+  Pencil,
 } from "lucide-react";
 import Pagination from "@/components/common/Pagination";
 import CustomDropdown from "@/components/common/CustomDropdown";
@@ -79,6 +80,10 @@ export default function AdminMediatorsPage() {
   // Rejection Modal
   const [rejectingMediator, setRejectingMediator] = useState<any | null>(null);
   const [rejectionReason, setRejectionReason] = useState("");
+
+  // Edit Mediator Code Modal
+  const [editingCodeMediator, setEditingCodeMediator] = useState<any | null>(null);
+  const [newMediatorCode, setNewMediatorCode] = useState("");
 
   // Fetch all mediators
   const fetchMediators = async () => {
@@ -226,6 +231,38 @@ export default function AdminMediatorsPage() {
       }
     } catch (err) {
       toast.error("Failed to reset status");
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // Handle Update Mediator Code
+  const handleConfirmUpdateCode = async () => {
+    if (!editingCodeMediator || !newMediatorCode.trim()) {
+      toast.error("Please enter a valid mediator code");
+      return;
+    }
+    setActionLoading(editingCodeMediator._id);
+    try {
+      const res = await fetch("/api/admin/mediators", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          mediatorId: editingCodeMediator._id,
+          action: "UPDATE_CODE",
+          mediatorCode: newMediatorCode.trim().toUpperCase(),
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "Mediator code updated!");
+        setEditingCodeMediator(null);
+        fetchMediators();
+      } else {
+        toast.error(data.error || "Failed to update code");
+      }
+    } catch (err) {
+      toast.error("Failed to update mediator code");
     } finally {
       setActionLoading(null);
     }
@@ -725,6 +762,17 @@ export default function AdminMediatorsPage() {
                             /* All Mediators Tab Actions */
                             <>
                               <button
+                                onClick={() => {
+                                  setEditingCodeMediator(mediator);
+                                  setNewMediatorCode(mediator.mediatorCode || "");
+                                }}
+                                className="py-1.5 px-3 rounded-xl bg-plum-50 hover:bg-plum-100 text-plum-900 font-bold text-xs border border-plum-200 transition-colors flex items-center gap-1 active:scale-95"
+                                title="Edit Mediator Agent Code"
+                              >
+                                <Pencil className="w-3.5 h-3.5 text-plum-700" />
+                                Edit Code
+                              </button>
+                              <button
                                 onClick={() => handleViewOrders(mediator)}
                                 className="py-1.5 px-3.5 rounded-xl bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white font-bold text-xs shadow-md shadow-plum-950/15 transition-all flex items-center gap-1.5 active:scale-95"
                                 title="Inspect all orders mediated by this agent"
@@ -1024,6 +1072,66 @@ export default function AdminMediatorsPage() {
                   className="py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-black text-xs hover:from-emerald-500 hover:to-teal-600 shadow-md shadow-emerald-700/20"
                 >
                   Confirm & Activate
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* ========================================================================= */}
+      {/* ✏️ EDIT MEDIATOR CODE MODAL */}
+      {/* ========================================================================= */}
+      <AnimatePresence>
+        {editingCodeMediator && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-plum-950/60 backdrop-blur-md">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="w-full max-w-md bg-white rounded-3xl p-6 shadow-2xl border border-plum-200 space-y-4"
+            >
+              <div className="w-12 h-12 rounded-2xl bg-plum-100 text-plum-900 flex items-center justify-center mx-auto">
+                <Pencil className="w-6 h-6" />
+              </div>
+
+              <div className="text-center space-y-1">
+                <h3 className="font-serif text-lg font-black text-plum-950">
+                  Edit Mediator Agent Code
+                </h3>
+                <p className="text-xs text-gray-500">
+                  Update the unique code for <strong>{editingCodeMediator.name}</strong>. Existing orders under this mediator will automatically sync.
+                </p>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-plum-950 mb-1">
+                  Mediator Agent Code:
+                </label>
+                <input
+                  type="text"
+                  value={newMediatorCode}
+                  onChange={(e) => setNewMediatorCode(e.target.value.toUpperCase())}
+                  placeholder="e.g. SK or LAX096"
+                  className="w-full p-2.5 rounded-xl border border-plum-200 font-mono font-bold text-xs uppercase focus:outline-none focus:ring-2 focus:ring-plum-500"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingCodeMediator(null)}
+                  className="py-2.5 rounded-xl border border-gray-200 text-gray-600 font-bold text-xs hover:bg-gray-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleConfirmUpdateCode}
+                  disabled={actionLoading === editingCodeMediator._id}
+                  className="py-2.5 rounded-xl plum-gradient-bg text-white font-black text-xs shadow-md disabled:opacity-50"
+                >
+                  {actionLoading === editingCodeMediator._id ? "Saving..." : "Save & Sync Orders"}
                 </button>
               </div>
             </motion.div>

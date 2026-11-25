@@ -216,12 +216,34 @@ export async function PATCH(req: NextRequest) {
       if (!mediatorCode || !mediatorCode.trim()) {
         return NextResponse.json({ error: "Mediator code is required" }, { status: 400 });
       }
-      mediator.mediatorCode = mediatorCode.toUpperCase().trim();
+      const newCode = mediatorCode.toUpperCase().trim();
+      const duplicate = await User.findOne({
+        _id: { $ne: mediator._id },
+        role: UserRole.PREMIUM_USER,
+        mediatorCode: newCode,
+      });
+      if (duplicate) {
+        return NextResponse.json(
+          { error: `Code #${newCode} is already assigned to ${duplicate.name}` },
+          { status: 400 }
+        );
+      }
+
+      const oldCode = mediator.mediatorCode;
+      mediator.mediatorCode = newCode;
       await mediator.save();
+
+      // Sync existing orders linked to this mediator or matching the new/old code
+      const syncConditions: any[] = [{ mediator: mediator._id }, { mediatorCode: newCode }];
+      if (oldCode) syncConditions.push({ mediatorCode: oldCode });
+      await Order.updateMany(
+        { $or: syncConditions },
+        { $set: { mediator: mediator._id, mediatorCode: newCode } }
+      );
 
       return NextResponse.json({
         success: true,
-        message: `Mediator code updated to #${mediator.mediatorCode}`,
+        message: `Mediator code updated to #${newCode} and synced across orders`,
         mediator,
       });
     }

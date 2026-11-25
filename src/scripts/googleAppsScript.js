@@ -24,6 +24,8 @@
 // Production Canonical API Webhook Base URL (Always use www.lakshmiagency.net to avoid 308 redirects)
 const WEBHOOK_BASE_URL = "https://www.lakshmiagency.net/api/webhooks/google-form";
 const SECRET_TOKEN = "lakshmi_agency_secure_webhook_token_2026";
+// Optional override: set to "ORDER" on Order Form sheet, "REFUND" on Refund Form sheet, or leave "AUTO"
+const FORM_TYPE = "AUTO";
 
 /**
  * Main Trigger function called automatically whenever a Google Form is submitted
@@ -51,15 +53,18 @@ function onFormSubmit(e) {
       payload.data[headerKey] = value;
     }
 
-    // Determine if this is an Order Form or Refund Form
+    // Determine if this is an Order Form or Refund Form (check headers & sheet name, not user values)
     const sheetNameLower = sheet.getName().toLowerCase();
-    const dataString = JSON.stringify(payload.data).toLowerCase();
+    const headersLower = headers.map((h) => h.toString().toLowerCase()).join(" | ");
 
     const isRefundForm =
-      sheetNameLower.includes("refund") ||
-      dataString.includes("upi") ||
-      dataString.includes("review screenshot") ||
-      dataString.includes("claim");
+      FORM_TYPE === "REFUND" ||
+      (FORM_TYPE === "AUTO" &&
+        (sheetNameLower.includes("refund") ||
+          headersLower.includes("upi") ||
+          headersLower.includes("review screenshot") ||
+          headersLower.includes("review proof") ||
+          headersLower.includes("refund amount")));
 
     // Pass secret in both URL query param and header to ensure 100% delivery across all network hops
     const endpoint =

@@ -25,7 +25,14 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { orderFormUrl, refundFormUrl, whatsappOrderTemplate, whatsappAnnouncementTemplate } = await req.json();
+    const {
+      orderFormUrl,
+      refundFormUrl,
+      orderFormProductEntryId,
+      orderFormMediatorEntryId,
+      whatsappOrderTemplate,
+      whatsappAnnouncementTemplate,
+    } = await req.json();
 
     await connectToDatabase();
     const setting = await Setting.findOneAndUpdate(
@@ -33,6 +40,8 @@ export async function POST(req: NextRequest) {
       {
         orderFormUrl,
         refundFormUrl,
+        orderFormProductEntryId: orderFormProductEntryId?.trim() || "",
+        orderFormMediatorEntryId: orderFormMediatorEntryId?.trim() || "",
         whatsappOrderTemplate,
         whatsappAnnouncementTemplate,
       },
