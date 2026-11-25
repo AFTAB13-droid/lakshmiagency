@@ -34,6 +34,15 @@ export async function POST(req: NextRequest) {
       pricingType,
       lessAmount,
       commissionAmount,
+      reviewPricingType,
+      reviewLessAmount,
+      reviewCommissionAmount,
+      ratingPricingType,
+      ratingLessAmount,
+      ratingCommissionAmount,
+      reviewDeletePricingType,
+      reviewDeleteLessAmount,
+      reviewDeleteCommissionAmount,
       reviewSlots,
       ratingSlots,
       dealType,
@@ -64,6 +73,25 @@ export async function POST(req: NextRequest) {
     const ratSlots = isNoInvestment ? 9999 : (Number(ratingSlots) || 0);
     const totalSlots = rSlots + ratSlots;
 
+    // Derive primary fallback pricingType from active feedback type if not explicitly provided
+    const revPType = reviewPricingType || pricingType || "FULL_REFUND";
+    const revLess = Number(reviewLessAmount ?? lessAmount) || 0;
+    const revComm = Number(reviewCommissionAmount ?? commissionAmount) || 0;
+
+    const ratPType = ratingPricingType || pricingType || "FULL_REFUND";
+    const ratLess = Number(ratingLessAmount ?? lessAmount) || 0;
+    const ratComm = Number(ratingCommissionAmount ?? commissionAmount) || 0;
+
+    const primaryPType = isNoInvestment
+      ? "FULL_REFUND"
+      : rSlots > 0
+      ? revPType
+      : ratSlots > 0
+      ? ratPType
+      : pricingType || "FULL_REFUND";
+    const primaryLess = isNoInvestment ? 0 : rSlots > 0 ? revLess : ratSlots > 0 ? ratLess : Number(lessAmount) || 0;
+    const primaryComm = isNoInvestment ? 0 : rSlots > 0 ? revComm : ratSlots > 0 ? ratComm : Number(commissionAmount) || 0;
+
     const newDeal = await Deal.create({
       brandName: finalBrand,
       productName: finalProduct,
@@ -72,9 +100,18 @@ export async function POST(req: NextRequest) {
       productLink: productLink || "",
       productImage: productImage || (isNoInvestment ? "/logo.jpg" : ""),
       price: finalPrice,
-      pricingType: isNoInvestment ? "FULL_REFUND" : (pricingType || "FULL_REFUND"),
-      lessAmount: isNoInvestment ? 0 : (Number(lessAmount) || 0),
-      commissionAmount: isNoInvestment ? 0 : (Number(commissionAmount) || 0),
+      pricingType: primaryPType,
+      lessAmount: primaryLess,
+      commissionAmount: primaryComm,
+      reviewPricingType: isNoInvestment ? "FULL_REFUND" : revPType,
+      reviewLessAmount: isNoInvestment ? 0 : revLess,
+      reviewCommissionAmount: isNoInvestment ? 0 : revComm,
+      ratingPricingType: isNoInvestment ? "FULL_REFUND" : ratPType,
+      ratingLessAmount: isNoInvestment ? 0 : ratLess,
+      ratingCommissionAmount: isNoInvestment ? 0 : ratComm,
+      reviewDeletePricingType: isNoInvestment ? "NONE" : (reviewDeletePricingType || "NONE"),
+      reviewDeleteLessAmount: isNoInvestment ? 0 : (Number(reviewDeleteLessAmount) || 0),
+      reviewDeleteCommissionAmount: isNoInvestment ? 0 : (Number(reviewDeleteCommissionAmount) || 0),
       totalSlots,
       remainingSlots: totalSlots,
       reviewSlots: rSlots,
@@ -137,6 +174,15 @@ export async function PATCH(req: NextRequest) {
     if (updateData.pricingType !== undefined) deal.pricingType = updateData.pricingType;
     if (updateData.lessAmount !== undefined) deal.lessAmount = Number(updateData.lessAmount) || 0;
     if (updateData.commissionAmount !== undefined) deal.commissionAmount = Number(updateData.commissionAmount) || 0;
+    if (updateData.reviewPricingType !== undefined) deal.reviewPricingType = updateData.reviewPricingType;
+    if (updateData.reviewLessAmount !== undefined) deal.reviewLessAmount = Number(updateData.reviewLessAmount) || 0;
+    if (updateData.reviewCommissionAmount !== undefined) deal.reviewCommissionAmount = Number(updateData.reviewCommissionAmount) || 0;
+    if (updateData.ratingPricingType !== undefined) deal.ratingPricingType = updateData.ratingPricingType;
+    if (updateData.ratingLessAmount !== undefined) deal.ratingLessAmount = Number(updateData.ratingLessAmount) || 0;
+    if (updateData.ratingCommissionAmount !== undefined) deal.ratingCommissionAmount = Number(updateData.ratingCommissionAmount) || 0;
+    if (updateData.reviewDeletePricingType !== undefined) deal.reviewDeletePricingType = updateData.reviewDeletePricingType;
+    if (updateData.reviewDeleteLessAmount !== undefined) deal.reviewDeleteLessAmount = Number(updateData.reviewDeleteLessAmount) || 0;
+    if (updateData.reviewDeleteCommissionAmount !== undefined) deal.reviewDeleteCommissionAmount = Number(updateData.reviewDeleteCommissionAmount) || 0;
     if (updateData.dealType !== undefined) deal.dealType = updateData.dealType;
     if (updateData.description !== undefined) deal.description = updateData.description;
     if (updateData.whatsappNumber !== undefined) deal.whatsappNumber = updateData.whatsappNumber;

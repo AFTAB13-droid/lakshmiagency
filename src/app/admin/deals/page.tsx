@@ -54,6 +54,15 @@ export default function AdminDealsPage() {
     pricingType: "LESS",
     lessAmount: "",
     commissionAmount: "",
+    reviewPricingType: "LESS",
+    reviewLessAmount: "",
+    reviewCommissionAmount: "",
+    ratingPricingType: "LESS",
+    ratingLessAmount: "",
+    ratingCommissionAmount: "",
+    reviewDeletePricingType: "NONE",
+    reviewDeleteLessAmount: "",
+    reviewDeleteCommissionAmount: "",
     reviewSlots: "10",
     ratingSlots: "10",
     dealType: "Original",
@@ -74,6 +83,15 @@ export default function AdminDealsPage() {
       pricingType: "LESS",
       lessAmount: "",
       commissionAmount: "",
+      reviewPricingType: "LESS",
+      reviewLessAmount: "",
+      reviewCommissionAmount: "",
+      ratingPricingType: "LESS",
+      ratingLessAmount: "",
+      ratingCommissionAmount: "",
+      reviewDeletePricingType: "NONE",
+      reviewDeleteLessAmount: "",
+      reviewDeleteCommissionAmount: "",
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: "Original",
@@ -104,6 +122,15 @@ export default function AdminDealsPage() {
       pricingType: deal.pricingType || "LESS",
       lessAmount: deal.lessAmount !== undefined ? String(deal.lessAmount) : "",
       commissionAmount: deal.commissionAmount !== undefined ? String(deal.commissionAmount) : "",
+      reviewPricingType: deal.reviewPricingType || deal.pricingType || "LESS",
+      reviewLessAmount: deal.reviewLessAmount !== undefined ? String(deal.reviewLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      reviewCommissionAmount: deal.reviewCommissionAmount !== undefined ? String(deal.reviewCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
+      ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      reviewDeletePricingType: deal.reviewDeletePricingType || "NONE",
+      reviewDeleteLessAmount: deal.reviewDeleteLessAmount !== undefined ? String(deal.reviewDeleteLessAmount) : "",
+      reviewDeleteCommissionAmount: deal.reviewDeleteCommissionAmount !== undefined ? String(deal.reviewDeleteCommissionAmount) : "",
       reviewSlots: deal.reviewSlots !== undefined ? String(deal.reviewSlots) : "10",
       ratingSlots: deal.ratingSlots !== undefined ? String(deal.ratingSlots) : "10",
       dealType: deal.dealType || "Original",
@@ -128,6 +155,15 @@ export default function AdminDealsPage() {
       pricingType: deal.pricingType || "LESS",
       lessAmount: deal.lessAmount !== undefined ? String(deal.lessAmount) : "",
       commissionAmount: deal.commissionAmount !== undefined ? String(deal.commissionAmount) : "",
+      reviewPricingType: deal.reviewPricingType || deal.pricingType || "LESS",
+      reviewLessAmount: deal.reviewLessAmount !== undefined ? String(deal.reviewLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      reviewCommissionAmount: deal.reviewCommissionAmount !== undefined ? String(deal.reviewCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
+      ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      reviewDeletePricingType: deal.reviewDeletePricingType || "NONE",
+      reviewDeleteLessAmount: deal.reviewDeleteLessAmount !== undefined ? String(deal.reviewDeleteLessAmount) : "",
+      reviewDeleteCommissionAmount: deal.reviewDeleteCommissionAmount !== undefined ? String(deal.reviewDeleteCommissionAmount) : "",
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: deal.dealType || "Original",
@@ -208,6 +244,18 @@ export default function AdminDealsPage() {
         preparedData.ratingSlots = "9999";
         if (!preparedData.productImage) {
           preparedData.productImage = "/logo.jpg";
+        }
+      } else {
+        const revS = Number(formData.reviewSlots) || 0;
+        const ratS = Number(formData.ratingSlots) || 0;
+        if (revS > 0) {
+          preparedData.pricingType = formData.reviewPricingType;
+          preparedData.lessAmount = formData.reviewLessAmount || "0";
+          preparedData.commissionAmount = formData.reviewCommissionAmount || "0";
+        } else if (ratS > 0) {
+          preparedData.pricingType = formData.ratingPricingType;
+          preparedData.lessAmount = formData.ratingLessAmount || "0";
+          preparedData.commissionAmount = formData.ratingCommissionAmount || "0";
         }
       }
 
@@ -899,31 +947,15 @@ export default function AdminDealsPage() {
                 </div>
               </div>
 
-              {/* Pricing Type Switcher */}
-              <div className="p-4 rounded-2xl bg-plum-50/60 border border-plum-100 space-y-3">
-                <span className="text-xs font-bold text-plum-900 block">Pricing & Payout Model</span>
-                <div className="grid grid-cols-3 gap-2">
-                  {[
-                    { id: "LESS", label: "Less Deal" },
-                    { id: "FULL_REFUND", label: "Full Refund" },
-                    { id: "COMMISSION", label: "Commission Deal" },
-                  ].map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, pricingType: p.id })}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
-                        formData.pricingType === p.id
-                          ? "plum-gradient-bg text-white shadow-sm"
-                          : "bg-white text-gray-600 border border-plum-100 hover:bg-plum-50"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+              {/* Marketplace Price & Granular Feedback Slots (Stock) */}
+              <div className="p-4 rounded-2xl bg-gold-50/50 border border-gold-200/70 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-bold text-plum-900 block">Price &amp; Granular Feedback Slots (Stock)</span>
+                  <span className="text-[11px] font-bold text-gold-700">
+                    Total Stock: {(Number(formData.reviewSlots) || 0) + (Number(formData.ratingSlots) || 0)} Units
+                  </span>
                 </div>
-
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-plum-900 mb-1">Marketplace Price (₹) *</label>
                     <input
@@ -932,48 +964,14 @@ export default function AdminDealsPage() {
                       onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                       placeholder="498"
                       required
-                      className="w-full px-3 py-2 rounded-xl border border-plum-100 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-plum-400 font-bold"
+                      className="w-full px-3 py-2 rounded-xl border border-gold-200 bg-white text-xs focus:outline-none focus:ring-2 focus:ring-plum-400 font-bold text-plum-950"
                     />
                   </div>
-
-                  {formData.pricingType === "LESS" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-plum-900 mb-1">Less / Deduction Amount (₹) *</label>
-                      <input
-                        type="number"
-                        value={formData.lessAmount}
-                        onChange={(e) => setFormData({ ...formData, lessAmount: e.target.value })}
-                        placeholder="20"
-                        required
-                        className="w-full px-3 py-2 rounded-xl border border-plum-100 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-plum-400 font-bold text-amber-700"
-                      />
-                    </div>
-                  )}
-
-                  {formData.pricingType === "COMMISSION" && (
-                    <div>
-                      <label className="block text-xs font-semibold text-plum-900 mb-1">Commission Payout (₹) *</label>
-                      <input
-                        type="number"
-                        value={formData.commissionAmount}
-                        onChange={(e) => setFormData({ ...formData, commissionAmount: e.target.value })}
-                        placeholder="25"
-                        required
-                        className="w-full px-3 py-2 rounded-xl border border-plum-100 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-plum-400 font-bold text-emerald-700"
-                      />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* Granular Feedback Slots */}
-              <div className="p-4 rounded-2xl bg-gold-50/50 border border-gold-200/70 space-y-3">
-                <span className="text-xs font-bold text-plum-900 block">Granular Feedback Slots (Stock)</span>
-                <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="block text-xs font-semibold text-plum-900 mb-1">Review Slots (Pics/Text)</label>
                     <input
                       type="number"
+                      min="0"
                       value={formData.reviewSlots}
                       onChange={(e) => setFormData({ ...formData, reviewSlots: e.target.value })}
                       required
@@ -984,6 +982,7 @@ export default function AdminDealsPage() {
                     <label className="block text-xs font-semibold text-plum-900 mb-1">Rating Slots (Stars only)</label>
                     <input
                       type="number"
+                      min="0"
                       value={formData.ratingSlots}
                       onChange={(e) => setFormData({ ...formData, ratingSlots: e.target.value })}
                       required
@@ -991,9 +990,181 @@ export default function AdminDealsPage() {
                     />
                   </div>
                 </div>
-                <div className="text-[11px] font-semibold text-gold-700">
-                  Total Deal Stock: {(Number(formData.reviewSlots) || 0) + (Number(formData.ratingSlots) || 0)} Units
+              </div>
+
+              {/* Per-Feedback-Type Pricing: Review Slots Pricing */}
+              {Number(formData.reviewSlots) > 0 && (
+                <div className="p-4 rounded-2xl bg-lotus-50/50 border border-lotus-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-lotus-950 flex items-center gap-1.5">
+                      📝 Review Deal Pricing <span className="text-[10px] font-bold text-lotus-700 bg-lotus-100 px-2 py-0.5 rounded-full">({formData.reviewSlots} Review Slots)</span>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "LESS", label: "Less Deal" },
+                      { id: "FULL_REFUND", label: "Full Refund" },
+                      { id: "COMMISSION", label: "Commission Deal" },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, reviewPricingType: p.id })}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
+                          formData.reviewPricingType === p.id
+                            ? "plum-gradient-bg text-white shadow-sm"
+                            : "bg-white text-gray-600 border border-lotus-200 hover:bg-lotus-50"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  {formData.reviewPricingType === "LESS" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-lotus-950 mb-1">Review Less / Deduction Amount (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.reviewLessAmount}
+                        onChange={(e) => setFormData({ ...formData, reviewLessAmount: e.target.value })}
+                        placeholder="e.g. 20"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-lotus-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-lotus-400 font-bold text-amber-700"
+                      />
+                    </div>
+                  )}
+                  {formData.reviewPricingType === "COMMISSION" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-lotus-950 mb-1">Review Commission Payout (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.reviewCommissionAmount}
+                        onChange={(e) => setFormData({ ...formData, reviewCommissionAmount: e.target.value })}
+                        placeholder="e.g. 50"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-lotus-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-lotus-400 font-bold text-emerald-700"
+                      />
+                    </div>
+                  )}
                 </div>
+              )}
+
+              {/* Per-Feedback-Type Pricing: Rating Slots Pricing */}
+              {Number(formData.ratingSlots) > 0 && (
+                <div className="p-4 rounded-2xl bg-amber-50/50 border border-amber-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-amber-950 flex items-center gap-1.5">
+                      ⭐ Rating Deal Pricing <span className="text-[10px] font-bold text-amber-800 bg-amber-100 px-2 py-0.5 rounded-full">({formData.ratingSlots} Rating Slots)</span>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "LESS", label: "Less Deal" },
+                      { id: "FULL_REFUND", label: "Full Refund" },
+                      { id: "COMMISSION", label: "Commission Deal" },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, ratingPricingType: p.id })}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
+                          formData.ratingPricingType === p.id
+                            ? "bg-gradient-to-r from-amber-500 to-gold-600 text-white shadow-sm"
+                            : "bg-white text-gray-600 border border-amber-200 hover:bg-amber-50"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  {formData.ratingPricingType === "LESS" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-950 mb-1">Rating Less / Deduction Amount (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.ratingLessAmount}
+                        onChange={(e) => setFormData({ ...formData, ratingLessAmount: e.target.value })}
+                        placeholder="e.g. 50"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-amber-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold text-amber-700"
+                      />
+                    </div>
+                  )}
+                  {formData.ratingPricingType === "COMMISSION" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-amber-950 mb-1">Rating Commission Payout (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.ratingCommissionAmount}
+                        onChange={(e) => setFormData({ ...formData, ratingCommissionAmount: e.target.value })}
+                        placeholder="e.g. 30"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-amber-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold text-emerald-700"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Review Delete / Error Pricing Box */}
+              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black text-rose-950 flex items-center gap-1.5">
+                    ⚠️ Review Delete / Error Pricing
+                  </span>
+                  <span className="text-[10px] text-rose-700 font-semibold">
+                    Shown to Buyers &amp; Mediators
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  {[
+                    { id: "NONE", label: "Not Set" },
+                    { id: "LESS", label: "Less Deal" },
+                    { id: "FULL_REFUND", label: "Full Refund" },
+                    { id: "COMMISSION", label: "Commission" },
+                  ].map((p) => (
+                    <button
+                      key={p.id}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, reviewDeletePricingType: p.id })}
+                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
+                        formData.reviewDeletePricingType === p.id
+                          ? p.id === "NONE"
+                            ? "bg-gray-700 text-white shadow-sm"
+                            : "bg-rose-600 text-white shadow-sm"
+                          : "bg-white text-gray-600 border border-rose-200 hover:bg-rose-50"
+                      }`}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+                </div>
+                {formData.reviewDeletePricingType === "LESS" && (
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-950 mb-1">Review Delete / Error Less Amount (₹) *</label>
+                    <input
+                      type="number"
+                      value={formData.reviewDeleteLessAmount}
+                      onChange={(e) => setFormData({ ...formData, reviewDeleteLessAmount: e.target.value })}
+                      placeholder="e.g. 100"
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 font-bold text-rose-700"
+                    />
+                  </div>
+                )}
+                {formData.reviewDeletePricingType === "COMMISSION" && (
+                  <div>
+                    <label className="block text-xs font-semibold text-rose-950 mb-1">Review Delete / Error Commission (₹) *</label>
+                    <input
+                      type="number"
+                      value={formData.reviewDeleteCommissionAmount}
+                      onChange={(e) => setFormData({ ...formData, reviewDeleteCommissionAmount: e.target.value })}
+                      placeholder="e.g. 20"
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 font-bold text-emerald-700"
+                    />
+                  </div>
+                )}
               </div>
             </>
           )}

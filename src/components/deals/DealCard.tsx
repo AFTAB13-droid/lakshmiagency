@@ -47,6 +47,16 @@ export const getDealTypeBadge = (dealType?: string) => {
   };
 };
 
+export const formatPricingLabel = (
+  pricingType?: string,
+  lessAmount?: number,
+  commissionAmount?: number
+) => {
+  if (pricingType === "LESS") return `Less ₹${lessAmount || 0}`;
+  if (pricingType === "COMMISSION") return `+₹${commissionAmount || 0} Comm`;
+  return "100% Full Refund";
+};
+
 interface DealCardProps {
   deal: any;
   mediatorCode?: string;
@@ -308,8 +318,12 @@ export default function DealCard({
                     className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
                   />
                 </div>
-                <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
-                  {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
+                <span className="text-[10px] text-amber-800 font-bold mt-1.5 block">
+                  {formatPricingLabel(
+                    deal.ratingPricingType || deal.pricingType,
+                    deal.ratingLessAmount ?? deal.lessAmount,
+                    deal.ratingCommissionAmount ?? deal.commissionAmount
+                  )}
                 </span>
               </div>
 
@@ -332,12 +346,31 @@ export default function DealCard({
                     className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
                   />
                 </div>
-                <span className="text-[10px] text-gray-500 font-medium mt-1.5 block">
-                  {deal.commissionAmount > 0
-                    ? `Comm: ₹${deal.commissionAmount}`
-                    : "Detailed Pic Review"}
+                <span className="text-[10px] text-lotus-800 font-bold mt-1.5 block">
+                  {formatPricingLabel(
+                    deal.reviewPricingType || deal.pricingType,
+                    deal.reviewLessAmount ?? deal.lessAmount,
+                    deal.reviewCommissionAmount ?? deal.commissionAmount
+                  )}
                 </span>
               </div>
+            </div>
+          )}
+
+          {/* Review Delete / Error Pricing Policy (Row View) */}
+          {!isNoInvestment && deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
+            <div className="p-2.5 rounded-2xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-xs">
+              <span className="font-bold text-rose-900 flex items-center gap-1.5">
+                <span>⚠️</span>
+                If Review Deleted / Error:
+              </span>
+              <span className="font-black text-rose-700 bg-white px-2.5 py-0.5 rounded-lg border border-rose-200 shadow-2xs">
+                {formatPricingLabel(
+                  deal.reviewDeletePricingType,
+                  deal.reviewDeleteLessAmount,
+                  deal.reviewDeleteCommissionAmount
+                )}
+              </span>
             </div>
           )}
 
@@ -647,8 +680,12 @@ export default function DealCard({
                       className="h-full bg-gradient-to-r from-gold-400 to-amber-500 rounded-full"
                     />
                   </div>
-                  <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
-                    {deal.pricingType === "LESS" ? `Less: ₹${deal.lessAmount}` : "5★ Rating"}
+                  <span className="text-[10px] text-amber-800 font-bold mt-1.5 block truncate">
+                    {formatPricingLabel(
+                      deal.ratingPricingType || deal.pricingType,
+                      deal.ratingLessAmount ?? deal.lessAmount,
+                      deal.ratingCommissionAmount ?? deal.commissionAmount
+                    )}
                   </span>
                 </div>
 
@@ -671,13 +708,32 @@ export default function DealCard({
                       className="h-full bg-gradient-to-r from-lotus-500 to-pink-500 rounded-full"
                     />
                   </div>
-                  <span className="text-[9px] text-gray-500 font-medium mt-1.5 block">
-                    {deal.commissionAmount > 0
-                      ? `Comm: ₹${deal.commissionAmount}`
-                      : "Detailed Review"}
+                  <span className="text-[10px] text-lotus-800 font-bold mt-1.5 block truncate">
+                    {formatPricingLabel(
+                      deal.reviewPricingType || deal.pricingType,
+                      deal.reviewLessAmount ?? deal.lessAmount,
+                      deal.reviewCommissionAmount ?? deal.commissionAmount
+                    )}
                   </span>
                 </div>
               </div>
+
+              {/* Review Delete / Error Pricing Policy (Column View) */}
+              {deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
+                <div className="p-2.5 rounded-2xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-[11px]">
+                  <span className="font-bold text-rose-900 flex items-center gap-1">
+                    <span>⚠️</span>
+                    Review Delete/Error:
+                  </span>
+                  <span className="font-black text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-2xs shrink-0">
+                    {formatPricingLabel(
+                      deal.reviewDeletePricingType,
+                      deal.reviewDeleteLessAmount,
+                      deal.reviewDeleteCommissionAmount
+                    )}
+                  </span>
+                </div>
+              )}
             </>
           )}
         </div>

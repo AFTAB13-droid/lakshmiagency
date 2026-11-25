@@ -13,10 +13,24 @@ export interface IDeal extends Document {
   productImage?: string; // Cloudinary URL
   price: number;
 
-  // Pricing Model
+  // Pricing Model (Legacy / Primary Fallback)
   pricingType: DealPricingType;
   lessAmount: number;         // Active when pricingType == "LESS"
   commissionAmount: number;   // Active when pricingType == "COMMISSION"
+
+  // Per-Feedback-Type Pricing (Review vs Rating)
+  reviewPricingType?: DealPricingType;
+  reviewLessAmount?: number;
+  reviewCommissionAmount?: number;
+
+  ratingPricingType?: DealPricingType;
+  ratingLessAmount?: number;
+  ratingCommissionAmount?: number;
+
+  // Review Delete / Error Pricing Policy
+  reviewDeletePricingType?: "NONE" | DealPricingType;
+  reviewDeleteLessAmount?: number;
+  reviewDeleteCommissionAmount?: number;
 
   // Granular Slot Allocations (inspired by ZMA & AspireMint)
   totalSlots: number;
@@ -54,7 +68,7 @@ const DealSchema = new Schema<IDeal>(
     productImage: { type: String, default: "" },
     price: { type: Number, required: true },
 
-    // Pricing Model
+    // Pricing Model (Legacy / Primary Fallback)
     pricingType: {
       type: String,
       enum: ["LESS", "FULL_REFUND", "COMMISSION"],
@@ -62,6 +76,32 @@ const DealSchema = new Schema<IDeal>(
     },
     lessAmount: { type: Number, default: 0 },
     commissionAmount: { type: Number, default: 0 },
+
+    // Per-Feedback-Type Pricing (Review vs Rating)
+    reviewPricingType: {
+      type: String,
+      enum: ["LESS", "FULL_REFUND", "COMMISSION"],
+      default: "FULL_REFUND",
+    },
+    reviewLessAmount: { type: Number, default: 0 },
+    reviewCommissionAmount: { type: Number, default: 0 },
+
+    ratingPricingType: {
+      type: String,
+      enum: ["LESS", "FULL_REFUND", "COMMISSION"],
+      default: "FULL_REFUND",
+    },
+    ratingLessAmount: { type: Number, default: 0 },
+    ratingCommissionAmount: { type: Number, default: 0 },
+
+    // Review Delete / Error Pricing Policy
+    reviewDeletePricingType: {
+      type: String,
+      enum: ["NONE", "LESS", "FULL_REFUND", "COMMISSION"],
+      default: "NONE",
+    },
+    reviewDeleteLessAmount: { type: Number, default: 0 },
+    reviewDeleteCommissionAmount: { type: Number, default: 0 },
 
     // Granular Slots
     totalSlots: { type: Number, required: true, default: 0 },

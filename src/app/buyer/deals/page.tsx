@@ -7,7 +7,7 @@ import SafeImage from "@/components/common/SafeImage";
 import Pagination from "@/components/common/Pagination";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
 import CustomDropdown from "@/components/common/CustomDropdown";
-import { getDealTypeBadge } from "@/components/deals/DealCard";
+import { getDealTypeBadge, formatPricingLabel } from "@/components/deals/DealCard";
 import {
   Tag,
   Search,
@@ -460,6 +460,13 @@ export default function BuyerDealsPage() {
                             <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-gold-400 to-amber-500" style={{ width: `${ratingPercent}%` }} />
                             </div>
+                            <span className="text-[9px] text-amber-800 font-bold mt-1 block truncate">
+                              {formatPricingLabel(
+                                deal.ratingPricingType || deal.pricingType,
+                                deal.ratingLessAmount ?? deal.lessAmount,
+                                deal.ratingCommissionAmount ?? deal.commissionAmount
+                              )}
+                            </span>
                           </div>
 
                           {/* Review Slots */}
@@ -474,8 +481,32 @@ export default function BuyerDealsPage() {
                             <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
                               <div className="h-full bg-gradient-to-r from-lotus-500 to-pink-500" style={{ width: `${reviewPercent}%` }} />
                             </div>
+                            <span className="text-[9px] text-lotus-800 font-bold mt-1 block truncate">
+                              {formatPricingLabel(
+                                deal.reviewPricingType || deal.pricingType,
+                                deal.reviewLessAmount ?? deal.lessAmount,
+                                deal.reviewCommissionAmount ?? deal.commissionAmount
+                              )}
+                            </span>
                           </div>
                         </div>
+
+                        {/* Review Delete / Error Pricing Policy (Buyer Column View) */}
+                        {deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
+                          <div className="p-2 rounded-xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-[10px]">
+                            <span className="font-bold text-rose-900 flex items-center gap-1">
+                              <span>⚠️</span>
+                              Review Delete/Error:
+                            </span>
+                            <span className="font-black text-rose-700 bg-white px-2 py-0.5 rounded-md border border-rose-200 shrink-0">
+                              {formatPricingLabel(
+                                deal.reviewDeletePricingType,
+                                deal.reviewDeleteLessAmount,
+                                deal.reviewDeleteCommissionAmount
+                              )}
+                            </span>
+                          </div>
+                        )}
                       </>
                     )}
                   </div>
@@ -633,19 +664,45 @@ export default function BuyerDealsPage() {
                         </p>
                       </div>
                     )}
+                    {!isNoInvestment && deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
+                      <div className="mt-1.5 inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-rose-50 border border-rose-200 text-[10px]">
+                        <span className="font-bold text-rose-900">⚠️ Review Delete/Error:</span>
+                        <span className="font-black text-rose-700">
+                          {formatPricingLabel(
+                            deal.reviewDeletePricingType,
+                            deal.reviewDeleteLessAmount,
+                            deal.reviewDeleteCommissionAmount
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
                 {/* Slots info - Hidden for No Investment Deal */}
                 {!isNoInvestment && (
                   <div className="hidden lg:flex items-center gap-4 text-xs">
-                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
+                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-28">
                       <span className="text-[10px] text-gray-400 block">Rating Slots</span>
-                      <strong className="text-gold-700 font-mono">{ratingRem}/{ratingTotal}</strong>
+                      <strong className="text-gold-700 font-mono block">{ratingRem}/{ratingTotal}</strong>
+                      <span className="text-[9px] text-amber-800 font-bold block truncate">
+                        {formatPricingLabel(
+                          deal.ratingPricingType || deal.pricingType,
+                          deal.ratingLessAmount ?? deal.lessAmount,
+                          deal.ratingCommissionAmount ?? deal.commissionAmount
+                        )}
+                      </span>
                     </div>
-                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-24">
+                    <div className="text-center p-2 rounded-xl bg-gray-50 border border-gray-100 w-28">
                       <span className="text-[10px] text-gray-400 block">Review Slots</span>
-                      <strong className="text-lotus-700 font-mono">{reviewRem}/{reviewTotal}</strong>
+                      <strong className="text-lotus-700 font-mono block">{reviewRem}/{reviewTotal}</strong>
+                      <span className="text-[9px] text-lotus-800 font-bold block truncate">
+                        {formatPricingLabel(
+                          deal.reviewPricingType || deal.pricingType,
+                          deal.reviewLessAmount ?? deal.lessAmount,
+                          deal.reviewCommissionAmount ?? deal.commissionAmount
+                        )}
+                      </span>
                     </div>
                   </div>
                 )}
