@@ -39,9 +39,9 @@ Less / Discount: ₹{lessAmount}
 const SettingSchema = new Schema<ISetting>(
   {
     key: { type: String, default: "global_settings", unique: true },
-    orderFormUrl: { type: String, default: "https://forms.gle/ydedLFJwcef59hPD7" },
+    orderFormUrl: { type: String, default: "https://docs.google.com/forms/d/e/1FAIpQLSf2AQzFD2OvlaBKqJAD2kosppTunWbCmF7fN99dykQ65GoVVA/viewform" },
     refundFormUrl: { type: String, default: "https://forms.gle/ssWFUKVpoxoKzKWc8" },
-    orderFormProductEntryId: { type: String, default: "" },
+    orderFormProductEntryId: { type: String, default: "entry.1856628188" },
     whatsappOrderTemplate: { type: String, default: DEFAULT_ORDER_TEMPLATE },
     whatsappAnnouncementTemplate: { type: String, default: DEFAULT_ANNOUNCEMENT_TEMPLATE },
     returnWindowDays: { type: Number, default: 20 },

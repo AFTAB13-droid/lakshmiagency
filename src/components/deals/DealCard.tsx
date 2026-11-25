@@ -64,13 +64,13 @@ export const buildPrefilledOrderFormUrl = (
   productEntryId?: string,
   mediatorEntryId?: string
 ) => {
-  const base = baseUrl || "https://forms.gle/ydedLFJwcef59hPD7";
+  const base = baseUrl || "https://docs.google.com/forms/d/e/1FAIpQLSf2AQzFD2OvlaBKqJAD2kosppTunWbCmF7fN99dykQ65GoVVA/viewform";
   const normalizeEntry = (id?: string, fallback = "") => {
     const clean = (id || "").trim();
     if (!clean) return fallback;
     return clean.startsWith("entry.") ? clean : `entry.${clean}`;
   };
-  const pKey = normalizeEntry(productEntryId, "entry.product");
+  const pKey = normalizeEntry(productEntryId, "entry.1856628188");
   const mKey = normalizeEntry(mediatorEntryId, "entry.mediator");
   const sep = base.includes("?") ? "&" : "?";
   const params = [`usp=pp_url`];
