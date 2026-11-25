@@ -18,6 +18,7 @@ import {
   Filter,
   UserCheck,
   CreditCard,
+  Trash2,
 } from "lucide-react";
 import UserDetailsModal from "@/components/admin/UserDetailsModal";
 import Pagination from "@/components/common/Pagination";
@@ -66,6 +67,29 @@ export default function AdminUsersPage() {
       }
     } catch (err) {
       toast.error("Failed to update status");
+    }
+  };
+
+  const handleDeleteUser = async (user: any) => {
+    const confirmed = window.confirm(
+      `Permanently remove "${user.name}" (${user.email}) from MongoDB?\n\nOnce deleted, they will be able to register again with this email.`
+    );
+    if (!confirmed) return;
+
+    const toastId = toast.loading(`Removing ${user.name}...`);
+    try {
+      const res = await fetch(`/api/admin/users?id=${user._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "User permanently deleted!", { id: toastId });
+        setUsers((prev) => prev.filter((u) => u._id !== user._id));
+      } else {
+        toast.error(data.error || "Failed to delete user", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error while deleting user", { id: toastId });
     }
   };
 
@@ -311,6 +335,15 @@ export default function AdminUsersPage() {
                             <Eye className="w-3.5 h-3.5 text-gold-300" />
                             <span>Details</span>
                           </button>
+                          {u.role !== "ADMIN" && (
+                            <button
+                              onClick={() => handleDeleteUser(u)}
+                              className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 transition-all hover:scale-105 active:scale-95"
+                              title="Permanently delete user from MongoDB"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          )}
                         </div>
                       </td>
                     </motion.tr>

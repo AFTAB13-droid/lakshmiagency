@@ -144,38 +144,50 @@ export async function DELETE(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     let id = searchParams.get("id");
+    let ids: string[] = [];
     if (!id) {
       try {
         const body = await req.json();
-        id = body.id || body._id;
+        if (Array.isArray(body.ids)) {
+          ids = body.ids.filter(Boolean);
+        } else {
+          id = body.id || body._id;
+        }
       } catch {}
     }
 
-    if (!id) {
-      return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
+    const targetIds = ids.length > 0 ? ids : id ? [id] : [];
+    if (targetIds.length === 0) {
+      return NextResponse.json({ error: "Order ID(s) required" }, { status: 400 });
     }
 
     await connectToDatabase();
-    const order = await Order.findById(id);
-    if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    const ordersToDelete = await Order.find({ _id: { $in: targetIds } });
+    if (ordersToDelete.length === 0) {
+      return NextResponse.json({ error: "No matching orders found" }, { status: 404 });
     }
 
-    // If order was consuming a slot (not REJECTED or CANCELLED), restore slot back to deal
-    if (order.dealId && order.status !== OrderStatus.REJECTED && order.status !== OrderStatus.CANCELLED) {
-      const deal = await Deal.findById(order.dealId);
-      if (deal) {
-        deal.remainingReview = Math.min(deal.reviewSlots, deal.remainingReview + 1);
-        deal.remainingSlots = deal.remainingReview + deal.remainingRating;
-        if (deal.remainingSlots > 0) {
-          deal.isActive = true;
+    // Restore slots on linked deals for any order that was consuming a slot
+    for (const order of ordersToDelete) {
+      if (order.dealId && order.status !== OrderStatus.REJECTED && order.status !== OrderStatus.CANCELLED) {
+        const deal = await Deal.findById(order.dealId);
+        if (deal) {
+          deal.remainingReview = Math.min(deal.reviewSlots, deal.remainingReview + 1);
+          deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+          if (deal.remainingSlots > 0) {
+            deal.isActive = true;
+          }
+          await deal.save();
         }
-        await deal.save();
       }
     }
 
-    await Order.findByIdAndDelete(id);
-    return NextResponse.json({ success: true, message: "Order deleted and stock replenished" });
+    await Order.deleteMany({ _id: { $in: targetIds } });
+    return NextResponse.json({
+      success: true,
+      deletedCount: ordersToDelete.length,
+      message: `${ordersToDelete.length} order(s) deleted and stock replenished`,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

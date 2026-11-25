@@ -254,6 +254,29 @@ export default function AdminMediatorsPage() {
     }
   };
 
+  const handleDeletePremiumUser = async (user: any) => {
+    const confirmed = window.confirm(
+      `Permanently remove "${user.name}" (${user.email}) from MongoDB?\n\nOnce deleted, they can register again with this email.`
+    );
+    if (!confirmed) return;
+
+    const toastId = toast.loading(`Removing ${user.name}...`);
+    try {
+      const res = await fetch(`/api/admin/users?id=${user._id}`, {
+        method: "DELETE",
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "User permanently deleted!", { id: toastId });
+        fetchMediators();
+      } else {
+        toast.error(data.error || "Failed to delete user", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error while deleting user", { id: toastId });
+    }
+  };
+
   // Filtered lists based on active tab and search
   const currentTabItems = useMemo(() => {
     if (activeTab === "REQUESTS") {
@@ -713,7 +736,23 @@ export default function AdminMediatorsPage() {
                                 <Package className="w-3.5 h-3.5 text-gold-300" />
                                 All Orders
                               </button>
+                              <button
+                                onClick={() => handleDeletePremiumUser(mediator)}
+                                className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 transition-colors active:scale-95"
+                                title="Permanently delete Premium User from MongoDB"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
                             </>
+                          )}
+                          {activeTab === "REQUESTS" && (
+                            <button
+                              onClick={() => handleDeletePremiumUser(mediator)}
+                              className="p-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-600 hover:text-red-700 border border-red-200 transition-colors active:scale-95"
+                              title="Permanently delete request from MongoDB"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
                           )}
                         </div>
                       </td>

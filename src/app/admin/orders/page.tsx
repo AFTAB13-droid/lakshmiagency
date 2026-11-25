@@ -31,6 +31,8 @@ export default function AdminOrdersPage() {
   const [utr, setUtr] = useState("");
   const [rejectionReasonInput, setRejectionReasonInput] = useState("");
   const [isRejecting, setIsRejecting] = useState(false);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [bulkDeleting, setBulkDeleting] = useState(false);
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -45,6 +47,51 @@ export default function AdminOrdersPage() {
       toast.error("Failed to load orders");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleSelectOrder = (id: string) => {
+    setSelectedIds((prev) =>
+      prev.includes(id) ? prev.filter((item) => item !== id) : [...prev, id]
+    );
+  };
+
+  const toggleSelectPage = (pageOrderIds: string[]) => {
+    const allSelected = pageOrderIds.length > 0 && pageOrderIds.every((id) => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds((prev) => prev.filter((id) => !pageOrderIds.includes(id)));
+    } else {
+      setSelectedIds((prev) => Array.from(new Set([...prev, ...pageOrderIds])));
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    const confirmed = window.confirm(
+      `Are you sure you want to permanently delete ${selectedIds.length} selected order(s)?\n\nAny active deal slots used by these orders will be restored automatically.`
+    );
+    if (!confirmed) return;
+
+    setBulkDeleting(true);
+    const toastId = toast.loading(`Deleting ${selectedIds.length} order(s)...`);
+    try {
+      const res = await fetch("/api/admin/orders", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: selectedIds }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || `Deleted ${selectedIds.length} order(s)!`, { id: toastId });
+        setOrders((prev) => prev.filter((o) => !selectedIds.includes(o._id)));
+        setSelectedIds([]);
+      } else {
+        toast.error(data.error || "Bulk delete failed", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error during bulk delete", { id: toastId });
+    } finally {
+      setBulkDeleting(false);
     }
   };
 
@@ -241,6 +288,45 @@ export default function AdminOrdersPage() {
         </div>
       </div>
 
+      {/* Bulk Selection Action Bar */}
+      {selectedIds.length > 0 && (
+        <div className="p-3.5 px-5 bg-gradient-to-r from-red-50 via-rose-50 to-white rounded-3xl border border-red-200 shadow-sm flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 text-xs font-bold text-red-950">
+            <span className="px-2.5 py-1 rounded-full bg-red-600 text-white font-mono text-[11px]">
+              {selectedIds.length}
+            </span>
+            <span>order(s) selected for bulk action</span>
+            {filteredOrders.length > selectedIds.length && (
+              <button
+                type="button"
+                onClick={() => setSelectedIds(filteredOrders.map((o) => o._id))}
+                className="text-red-700 underline hover:text-red-900 font-bold"
+              >
+                Select all {filteredOrders.length} matching orders
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => setSelectedIds([])}
+              className="px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 text-xs font-bold hover:bg-gray-50"
+            >
+              Clear
+            </button>
+            <button
+              type="button"
+              onClick={handleBulkDelete}
+              disabled={bulkDeleting}
+              className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black shadow-sm flex items-center gap-1.5 disabled:opacity-50"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              {bulkDeleting ? "Deleting..." : `Delete Selected (${selectedIds.length})`}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Advanced Animated Table */}
       <div className="bg-white rounded-3xl border border-plum-100 shadow-sm overflow-hidden">
         {loading ? (
@@ -259,6 +345,18 @@ export default function AdminOrdersPage() {
             <table className="w-full text-left text-xs">
               <thead>
                 <tr className="bg-plum-50/70 text-plum-900 border-b border-plum-100 font-black text-[11px] uppercase tracking-wider">
+                  <th className="p-4 sm:p-5 w-10">
+                    <input
+                      type="checkbox"
+                      checked={
+                        paginatedOrders.length > 0 &&
+                        paginatedOrders.every((o) => selectedIds.includes(o._id))
+                      }
+                      onChange={() => toggleSelectPage(paginatedOrders.map((o) => o._id))}
+                      className="w-4 h-4 rounded accent-plum-800 cursor-pointer"
+                      title="Select all on this page"
+                    />
+                  </th>
                   <th className="p-4 sm:p-5">ORDER ID</th>
                   <th className="p-4 sm:p-5">BUYER DETAILS</th>
                   <th className="p-4 sm:p-5">PRODUCT & BRAND</th>
@@ -295,8 +393,20 @@ export default function AdminOrdersPage() {
                       key={o._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
-                      className="hover:bg-gradient-to-r hover:from-plum-50/40 hover:via-lotus-50/20 hover:to-white transition-all group"
+                      className={`hover:bg-gradient-to-r hover:from-plum-50/40 hover:via-lotus-50/20 hover:to-white transition-all group ${
+                        selectedIds.includes(o._id) ? "bg-red-50/40" : ""
+                      }`}
                     >
+                      {/* Checkbox */}
+                      <td className="p-4 sm:p-5">
+                        <input
+                          type="checkbox"
+                          checked={selectedIds.includes(o._id)}
+                          onChange={() => toggleSelectOrder(o._id)}
+                          className="w-4 h-4 rounded accent-plum-800 cursor-pointer"
+                        />
+                      </td>
+
                       {/* Order ID */}
                       <td className="p-4 sm:p-5">
                         <div className="font-mono font-black text-plum-950 text-xs">
