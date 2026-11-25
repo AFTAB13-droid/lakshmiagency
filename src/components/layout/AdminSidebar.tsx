@@ -50,8 +50,8 @@ const navItems = [
     icon: ShoppingBag,
   },
   {
-    label: "Mediators Hub",
-    subLabel: "Approval requests & agent orders",
+    label: "Premium Users Hub",
+    subLabel: "Approval requests & user orders",
     href: "/admin/mediators",
     icon: Award,
   },

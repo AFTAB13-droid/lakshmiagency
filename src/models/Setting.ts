@@ -5,7 +5,6 @@ export interface ISetting extends Document {
   orderFormUrl: string;
   refundFormUrl: string;
   orderFormProductEntryId?: string;
-  orderFormMediatorEntryId?: string;
   whatsappOrderTemplate: string;
   whatsappAnnouncementTemplate: string;
   returnWindowDays: number;
@@ -43,7 +42,6 @@ const SettingSchema = new Schema<ISetting>(
     orderFormUrl: { type: String, default: "https://forms.gle/ydedLFJwcef59hPD7" },
     refundFormUrl: { type: String, default: "https://forms.gle/ssWFUKVpoxoKzKWc8" },
     orderFormProductEntryId: { type: String, default: "" },
-    orderFormMediatorEntryId: { type: String, default: "" },
     whatsappOrderTemplate: { type: String, default: DEFAULT_ORDER_TEMPLATE },
     whatsappAnnouncementTemplate: { type: String, default: DEFAULT_ANNOUNCEMENT_TEMPLATE },
     returnWindowDays: { type: Number, default: 20 },

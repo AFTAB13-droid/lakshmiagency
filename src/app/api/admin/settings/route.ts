@@ -29,7 +29,6 @@ export async function POST(req: NextRequest) {
       orderFormUrl,
       refundFormUrl,
       orderFormProductEntryId,
-      orderFormMediatorEntryId,
       whatsappOrderTemplate,
       whatsappAnnouncementTemplate,
     } = await req.json();
@@ -41,7 +40,6 @@ export async function POST(req: NextRequest) {
         orderFormUrl,
         refundFormUrl,
         orderFormProductEntryId: orderFormProductEntryId?.trim() || "",
-        orderFormMediatorEntryId: orderFormMediatorEntryId?.trim() || "",
         whatsappOrderTemplate,
         whatsappAnnouncementTemplate,
       },

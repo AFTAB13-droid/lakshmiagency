@@ -258,7 +258,7 @@ export default function SignUpPage() {
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
             {step === "MEDIATOR_PENDING"
-              ? "Your mediator registration request is under administrative review"
+              ? "Your Premium User registration request is under administrative review"
               : step === "DETAILS"
               ? "Join Lakshmi Agency to track orders, feedback slots & verified payouts"
               : `Enter the 6-digit verification code sent to ${formData.email}`}
@@ -279,7 +279,7 @@ export default function SignUpPage() {
                 Application Received!
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
-                Thank you, <strong>{formData.name}</strong>. Your mediator account request has been submitted to Lakshmi Agency Administration.
+                Thank you, <strong>{formData.name}</strong>. Your Premium User account request has been submitted to Lakshmi Agency Administration.
               </p>
             </div>
 
@@ -292,12 +292,6 @@ export default function SignUpPage() {
               <p className="text-amber-800/90 leading-relaxed text-[11px]">
                 Your request is under verification. Once admin approves your request, you can login. Until approval is granted, access remains locked.
               </p>
-              <div className="pt-2 border-t border-amber-200/60 flex items-center justify-between text-[11px]">
-                <span className="text-gray-500 font-medium">Assigned Mediator Code:</span>
-                <span className="font-mono font-black text-plum-950 bg-white px-2.5 py-0.5 rounded-lg border border-amber-200">
-                  #{registeredCode || formData.mediatorCode || "PENDING"}
-                </span>
-              </div>
             </div>
 
             <Link

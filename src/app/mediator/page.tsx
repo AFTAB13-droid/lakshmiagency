@@ -2,6 +2,7 @@ import React from "react";
 import connectToDatabase from "@/lib/db";
 import { Order, OrderStatus } from "@/models/Order";
 import { Deal } from "@/models/Deal";
+import { User } from "@/models/User";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/auth";
 import Link from "next/link";
@@ -11,30 +12,42 @@ import StatCard from "@/components/common/StatCard";
 
 export const dynamic = "force-dynamic";
 
-export default async function MediatorDashboardPage() {
+export default async function PremiumUserDashboardPage() {
   await connectToDatabase();
   const session = await getServerSession(authOptions);
   // @ts-ignore
   const userId = session?.user?.id;
-  // @ts-ignore
-  const mediatorCode = session?.user?.mediatorCode || "LAX096";
+  const email = session?.user?.email?.toLowerCase().trim();
+  const currentUser = email ? await User.findOne({ email }).select("mobile _id").lean() : null;
+
+  const matchConditions: any[] = [];
+  if (email) matchConditions.push({ buyerEmail: email });
+  if (userId || currentUser?._id) matchConditions.push({ buyer: currentUser?._id || userId });
+  if (currentUser?.mobile) {
+    const cleanDigits = currentUser.mobile.replace(/\D/g, "").slice(-10);
+    matchConditions.push({ buyerPhone: currentUser.mobile });
+    if (cleanDigits.length === 10) {
+      matchConditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
+    }
+  }
+  const ownerQuery = matchConditions.length > 0 ? { $or: matchConditions } : { buyer: userId };
 
   const [myOrdersCount, pendingRefunds, formsFilled, approvedPaid, availableDeals, recentOrders] =
     await Promise.all([
-      Order.countDocuments({ mediator: userId }),
-      Order.countDocuments({ mediator: userId, status: OrderStatus.ORDER_FILLED }),
-      Order.countDocuments({ mediator: userId, status: OrderStatus.REFUND_FORM_FILLED }),
-      Order.countDocuments({ mediator: userId, status: OrderStatus.APPROVED_AND_PAID }),
+      Order.countDocuments(ownerQuery),
+      Order.countDocuments({ ...ownerQuery, status: OrderStatus.ORDER_FILLED }),
+      Order.countDocuments({ ...ownerQuery, status: OrderStatus.REFUND_FORM_FILLED }),
+      Order.countDocuments({ ...ownerQuery, status: OrderStatus.APPROVED_AND_PAID }),
       Deal.countDocuments({ isActive: true, remainingSlots: { $gt: 0 } }),
-      Order.find({ mediator: userId }).sort({ createdAt: -1 }).limit(5).lean(),
+      Order.find(ownerQuery).sort({ createdAt: -1 }).limit(5).lean(),
     ]);
 
   const cards = [
-    { label: "My Orders", val: myOrdersCount, icon: "shopping-bag", colorScheme: "plum", subtext: `Agent #${mediatorCode}`, trend: "Live Synced" },
-    { label: "In Review / Countdown", val: pendingRefunds, icon: "clock", colorScheme: "amber", subtext: "4-5 Days Review Phase", trend: "Countdown" },
-    { label: "Refund Forms Filled", val: formsFilled, icon: "refund", colorScheme: "blue", subtext: "Buyer Claim Received", trend: "Needs Action" },
+    { label: "My Orders", val: myOrdersCount, icon: "shopping-bag", colorScheme: "plum", subtext: "Forms You Submitted", trend: "Live Synced" },
+    { label: "Order Filled", val: pendingRefunds, icon: "clock", colorScheme: "amber", subtext: "Awaiting Refund Form", trend: "Countdown" },
+    { label: "Refund Forms Filled", val: formsFilled, icon: "refund", colorScheme: "blue", subtext: "Claim Under Review", trend: "Processing" },
     { label: "Approved / Paid", val: approvedPaid, icon: "check-circle", colorScheme: "emerald", subtext: "UTR Settled & Closed", trend: "Completed" },
-    { label: "Available Deals", val: availableDeals, icon: "tag", colorScheme: "gold", subtext: "Open Feedback Slots", trend: "Inventory" },
+    { label: "Available Deals", val: availableDeals, icon: "tag", colorScheme: "gold", subtext: "Open Deal Campaigns", trend: "Live Deals" },
   ];
 
   return (
@@ -47,13 +60,13 @@ export default async function MediatorDashboardPage() {
           <ThreeEmblem size={72} />
           <div>
             <div className="inline-flex items-center gap-1.5 px-3 py-0.5 rounded-full bg-white/10 text-gold-300 text-[10px] font-black uppercase tracking-widest border border-gold-400/30">
-              Mediator Command Center • Agent #{mediatorCode}
+              Premium User Portal
             </div>
             <h1 className="font-serif text-2xl sm:text-3xl font-black mt-1.5 text-white tracking-tight">
               Welcome back, {session?.user?.name}!
             </h1>
             <p className="text-xs text-white/80 mt-1 max-w-xl font-medium">
-              Track submitted orders, monitor the 20-day review countdown, and disburse verified buyer refunds.
+              Explore active deals, track all Order Forms and Refund Forms you have filled, and monitor your payouts.
             </p>
           </div>
         </div>
@@ -95,8 +108,8 @@ export default async function MediatorDashboardPage() {
       <div className="bg-white rounded-3xl p-6 border border-plum-100 shadow-sm">
         <div className="flex items-center justify-between mb-4">
           <div>
-            <h2 className="font-serif font-bold text-plum-900 text-base">Assigned Orders Stream</h2>
-            <p className="text-xs text-gray-400">Orders submitted by buyers referencing your Agent Code #{mediatorCode}</p>
+            <h2 className="font-serif font-bold text-plum-900 text-base">Your Recent Orders</h2>
+            <p className="text-xs text-gray-400">Order Forms &amp; Refund Forms submitted under your account</p>
           </div>
           <Link href="/mediator/orders" className="text-xs font-bold text-lotus-600 flex items-center gap-1 hover:underline">
             Go to Orders Desk <ArrowRight className="w-3.5 h-3.5" />

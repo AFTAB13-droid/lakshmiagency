@@ -34,7 +34,6 @@ export default function AdminSettingsPage() {
     orderFormUrl: "",
     refundFormUrl: "",
     orderFormProductEntryId: "",
-    orderFormMediatorEntryId: "",
     whatsappOrderTemplate: "",
     whatsappAnnouncementTemplate: "",
   });
@@ -59,7 +58,6 @@ export default function AdminSettingsPage() {
             orderFormUrl: data.setting.orderFormUrl || "",
             refundFormUrl: data.setting.refundFormUrl || "",
             orderFormProductEntryId: data.setting.orderFormProductEntryId || "",
-            orderFormMediatorEntryId: data.setting.orderFormMediatorEntryId || "",
             whatsappOrderTemplate: data.setting.whatsappOrderTemplate || "",
             whatsappAnnouncementTemplate: data.setting.whatsappAnnouncementTemplate || "",
           });
@@ -220,10 +218,10 @@ export default function AdminSettingsPage() {
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2 border-t border-plum-50">
+            <div className="pt-2 border-t border-plum-50">
               <div>
                 <label className="block text-xs font-bold text-plum-950 mb-1">
-                  Order Form: Product Code Entry ID <span className="text-gray-400 font-normal">(Prefill)</span>
+                  Order Form: Product Code Entry ID <span className="text-gray-400 font-normal">(For Automatic Stock Tracking Prefill)</span>
                 </label>
                 <input
                   type="text"
@@ -233,22 +231,9 @@ export default function AdminSettingsPage() {
                   className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-plum-400"
                 />
               </div>
-
-              <div>
-                <label className="block text-xs font-bold text-plum-950 mb-1">
-                  Order Form: Mediator Code Entry ID <span className="text-gray-400 font-normal">(Prefill)</span>
-                </label>
-                <input
-                  type="text"
-                  value={settings.orderFormMediatorEntryId}
-                  onChange={(e) => setSettings({ ...settings, orderFormMediatorEntryId: e.target.value })}
-                  placeholder="e.g. entry.987654321"
-                  className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-mono focus:outline-none focus:ring-2 focus:ring-plum-400"
-                />
-              </div>
             </div>
             <p className="text-[11px] text-gray-500 bg-plum-50/50 p-2.5 rounded-xl border border-plum-100">
-              💡 <strong>Tip:</strong> In Google Forms, click <strong>⋮ → Get pre-filled link</strong>, enter test values in Product Code &amp; Mediator Code, and paste the <code className="font-mono text-plum-900">entry.XXXXXXXXX</code> IDs here so every deal link auto-fills your form!
+              💡 <strong>Tip:</strong> In Google Forms, click <strong>⋮ → Get pre-filled link</strong>, enter a test value in Product Code, and paste the <code className="font-mono text-plum-900">entry.XXXXXXXXX</code> ID here so every deal link auto-fills your Order Form!
             </p>
           </div>
 

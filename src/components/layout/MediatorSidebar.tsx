@@ -24,13 +24,13 @@ import ThreeEmblem from "@/components/common/ThreeEmblem";
 const navItems = [
   {
     label: "Dashboard",
-    subLabel: "Orders, holdings & pending overview",
+    subLabel: "Your orders, refunds & overview",
     href: "/mediator",
     icon: LayoutDashboard,
   },
   {
-    label: "My Orders",
-    subLabel: "Track buyer forms & WhatsApp reminders",
+    label: "My Orders & Refunds",
+    subLabel: "Forms & payouts you submitted",
     href: "/mediator/orders",
     icon: ShoppingBag,
   },
@@ -39,12 +39,6 @@ const navItems = [
     subLabel: "Available slots & 1-click pitches",
     href: "/mediator/deals",
     icon: Tag,
-  },
-  {
-    label: "Rewards & Payouts",
-    subLabel: "UPI ID, Bank details & commissions",
-    href: "/mediator/settings",
-    icon: CreditCard,
   },
 ];
 
@@ -97,7 +91,7 @@ export default function MediatorSidebar() {
                 </h2>
                 <div className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gradient-to-r from-gold-100 to-plum-100 text-plum-900 text-[10px] font-extrabold uppercase tracking-wider mt-1 border border-gold-300/60 shadow-xs">
                   <Award className="w-2.5 h-2.5 text-gold-600" />
-                  Premium Mediator
+                  Premium User
                 </div>
               </div>
             </Link>

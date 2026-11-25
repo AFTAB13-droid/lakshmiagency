@@ -29,30 +29,23 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    let ordersQuery: any = {};
-
-    if (targetUser.role === UserRole.PREMIUM_USER) {
-      // Find orders assigned to this mediator
-      const conditions: any[] = [{ mediator: targetUser._id }];
-      if (targetUser.mediatorCode) {
-        conditions.push({ mediatorCode: targetUser.mediatorCode.toUpperCase() });
-      }
-      ordersQuery = { $or: conditions };
-    } else {
-      // Buyer orders: match by email, phone, or name
-      const conditions: any[] = [];
-      if (targetUser.email) {
-        conditions.push({ buyerEmail: targetUser.email.toLowerCase() });
-      }
-      if (targetUser.mobile) {
-        conditions.push({ buyerPhone: targetUser.mobile });
-      }
-      if (targetUser.name) {
-        conditions.push({ buyerName: targetUser.name });
-      }
-
-      ordersQuery = conditions.length > 0 ? { $or: conditions } : { buyerEmail: targetUser.email };
+    // Match orders submitted by this user (both Buyer & Premium User) via userId, email, phone, or name
+    const conditions: any[] = [{ buyer: targetUser._id }];
+    if (targetUser.email) {
+      conditions.push({ buyerEmail: targetUser.email.toLowerCase().trim() });
     }
+    if (targetUser.mobile) {
+      const cleanDigits = targetUser.mobile.replace(/\D/g, "").slice(-10);
+      conditions.push({ buyerPhone: targetUser.mobile });
+      if (cleanDigits.length === 10) {
+        conditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
+      }
+    }
+    if (targetUser.name) {
+      conditions.push({ buyerName: targetUser.name });
+    }
+
+    const ordersQuery: any = conditions.length > 0 ? { $or: conditions } : { buyerEmail: targetUser.email };
 
     const orders = await Order.find(ordersQuery)
       .sort({ createdAt: -1 })

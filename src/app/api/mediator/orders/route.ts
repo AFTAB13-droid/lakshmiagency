@@ -2,26 +2,40 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
-import { Order, OrderStatus } from "@/models/Order";
+import { Order } from "@/models/Order";
+import { User } from "@/models/User";
+import { findOrderByNormalizedId } from "@/lib/webhookHelpers";
 
-export async function GET(req: NextRequest) {
+export const dynamic = "force-dynamic";
+
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
     // @ts-ignore
-    if (!session || session.user?.role !== "PREMIUM_USER") {
+    if (!session?.user?.email || session.user?.role !== "PREMIUM_USER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     await connectToDatabase();
-    // @ts-ignore
-    const userId = session.user.id;
-    // @ts-ignore
-    const mediatorCode = session.user.mediatorCode;
+    const email = session.user.email.toLowerCase().trim();
+    const currentUser = await User.findOne({ email }).select("mobile name _id").lean();
 
-    // Find orders assigned by user ID or mediatorCode
-    const orders = await Order.find({
-      $or: [{ mediator: userId }, { mediatorCode: mediatorCode?.toUpperCase() }],
-    }).sort({ createdAt: -1 });
+    const matchConditions: any[] = [{ buyerEmail: email }];
+    if (currentUser?._id) {
+      matchConditions.push({ buyer: currentUser._id });
+    }
+    if (currentUser?.mobile) {
+      const cleanDigits = currentUser.mobile.replace(/\D/g, "").slice(-10);
+      matchConditions.push({ buyerPhone: currentUser.mobile });
+      if (cleanDigits.length === 10) {
+        matchConditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
+      }
+    }
+
+    // Fetch only Order & Refund Forms filled by this Premium User themselves
+    const orders = await Order.find({ $or: matchConditions })
+      .sort({ createdAt: -1 })
+      .lean();
 
     return NextResponse.json({ success: true, orders });
   } catch (err: any) {
@@ -29,30 +43,47 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function PATCH(req: NextRequest) {
+// 1-Click Claim Order by Order ID (if Premium User used a different email/phone on Google Form)
+export async function POST(req: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     // @ts-ignore
-    if (!session || session.user?.role !== "PREMIUM_USER") {
+    if (!session?.user?.email || session.user?.role !== "PREMIUM_USER") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { orderId, status, notes } = await req.json();
+    const { orderId } = await req.json();
+    if (!orderId || !orderId.trim()) {
+      return NextResponse.json({ error: "Order ID is required" }, { status: 400 });
+    }
+
     await connectToDatabase();
+    const email = session.user.email.toLowerCase().trim();
+    const currentUser = await User.findOne({ email });
+    if (!currentUser) {
+      return NextResponse.json({ error: "User profile not found" }, { status: 404 });
+    }
 
-    const order = await Order.findById(orderId);
+    const order = await findOrderByNormalizedId(orderId.trim());
     if (!order) {
-      return NextResponse.json({ error: "Order not found" }, { status: 404 });
+      return NextResponse.json(
+        {
+          error: `Order #${orderId.trim()} not found. Please confirm the Google Order Form was submitted.`,
+        },
+        { status: 404 }
+      );
     }
 
-    order.status = status;
-    if (notes) order.notes = notes;
-    if (status === OrderStatus.APPROVED_AND_PAID) {
-      order.paidAt = new Date();
-    }
+    order.buyer = currentUser._id;
+    if (!order.buyerEmail) order.buyerEmail = email;
+    if (!order.buyerPhone && currentUser.mobile) order.buyerPhone = currentUser.mobile;
     await order.save();
 
-    return NextResponse.json({ success: true, order });
+    return NextResponse.json({
+      success: true,
+      message: `Order #${order.marketplaceOrderId} linked to your Premium User account!`,
+      order,
+    });
   } catch (err: any) {
     return NextResponse.json({ error: err.message }, { status: 500 });
   }

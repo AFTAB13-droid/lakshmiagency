@@ -149,7 +149,7 @@ export default function LoginPage() {
             }`}
           >
             <Award className="w-3.5 h-3.5 text-gold-600" />
-            Agent / Mediator
+            Premium User
           </button>
           <button
             type="button"
