@@ -3,6 +3,7 @@ import connectToDatabase from "@/lib/db";
 import { Order, OrderStatus } from "@/models/Order";
 import { Deal } from "@/models/Deal";
 import { User } from "@/models/User";
+import { getSelfUserOrders } from "@/lib/webhookHelpers";
 import { getServerSession } from "next-auth";
 import authOptions from "@/lib/auth";
 import Link from "next/link";
@@ -20,27 +21,20 @@ export default async function PremiumUserDashboardPage() {
   const email = session?.user?.email?.toLowerCase().trim();
   const currentUser = email ? await User.findOne({ email }).select("mobile _id").lean() : null;
 
-  const matchConditions: any[] = [];
-  if (email) matchConditions.push({ buyerEmail: email });
-  if (userId || currentUser?._id) matchConditions.push({ buyer: currentUser?._id || userId });
-  if (currentUser?.mobile) {
-    const cleanDigits = currentUser.mobile.replace(/\D/g, "").slice(-10);
-    matchConditions.push({ buyerPhone: currentUser.mobile });
-    if (cleanDigits.length === 10) {
-      matchConditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
-    }
-  }
-  const ownerQuery = matchConditions.length > 0 ? { $or: matchConditions } : { buyer: userId };
+  const [allSelfOrders, availableDeals] = await Promise.all([
+    getSelfUserOrders({
+      _id: currentUser?._id || userId,
+      email,
+      mobile: currentUser?.mobile,
+    }),
+    Deal.countDocuments({ isActive: true, remainingSlots: { $gt: 0 } }),
+  ]);
 
-  const [myOrdersCount, pendingRefunds, formsFilled, approvedPaid, availableDeals, recentOrders] =
-    await Promise.all([
-      Order.countDocuments(ownerQuery),
-      Order.countDocuments({ ...ownerQuery, status: OrderStatus.ORDER_FILLED }),
-      Order.countDocuments({ ...ownerQuery, status: OrderStatus.REFUND_FORM_FILLED }),
-      Order.countDocuments({ ...ownerQuery, status: OrderStatus.APPROVED_AND_PAID }),
-      Deal.countDocuments({ isActive: true, remainingSlots: { $gt: 0 } }),
-      Order.find(ownerQuery).sort({ createdAt: -1 }).limit(5).lean(),
-    ]);
+  const myOrdersCount = allSelfOrders.length;
+  const pendingRefunds = allSelfOrders.filter((o: any) => o.status === OrderStatus.ORDER_FILLED).length;
+  const formsFilled = allSelfOrders.filter((o: any) => o.status === OrderStatus.REFUND_FORM_FILLED).length;
+  const approvedPaid = allSelfOrders.filter((o: any) => o.status === OrderStatus.APPROVED_AND_PAID).length;
+  const recentOrders = allSelfOrders.slice(0, 5);
 
   const cards = [
     { label: "My Orders", val: myOrdersCount, icon: "shopping-bag", colorScheme: "plum", subtext: "Forms You Submitted", trend: "Live Synced" },

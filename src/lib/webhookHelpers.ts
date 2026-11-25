@@ -119,3 +119,71 @@ export function calculateDealPayout(deal: any, isRatingSlot: boolean): number {
   }
   return price;
 }
+
+/**
+ * Fetches orders belonging to a user (Premium User / Buyer) with Mobile-First priority:
+ * 1. Check mobile number match (+ explicitly linked buyer: user._id).
+ * 2. ONLY if no orders matched mobile/userId, fall back to email ID match.
+ */
+export async function getSelfUserOrders(user: {
+  _id?: any;
+  email?: string;
+  mobile?: string;
+}) {
+  const email = (user.email || "").toLowerCase().trim();
+  const rawMobile = (user.mobile || "").trim();
+  const cleanDigits = rawMobile.replace(/\D/g, "").slice(-10);
+
+  const primaryConditions: any[] = [];
+  if (user._id) primaryConditions.push({ buyer: user._id });
+  if (rawMobile) primaryConditions.push({ buyerPhone: rawMobile });
+  if (cleanDigits.length === 10) {
+    primaryConditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
+  }
+
+  if (primaryConditions.length > 0) {
+    const mobileOrLinkedOrders = await Order.find({ $or: primaryConditions })
+      .sort({ createdAt: -1 })
+      .lean();
+
+    if (mobileOrLinkedOrders.length > 0) {
+      return mobileOrLinkedOrders;
+    }
+  }
+
+  if (!email) return [];
+
+  return Order.find({ buyerEmail: email }).sort({ createdAt: -1 }).lean();
+}
+
+/**
+ * In-memory equivalent of getSelfUserOrders for bulk list aggregation.
+ */
+export function filterSelfUserOrdersFromList(
+  allOrders: any[],
+  user: { _id?: any; email?: string; mobile?: string }
+) {
+  const uId = user._id ? String(user._id) : "";
+  const uEmail = (user.email || "").toLowerCase().trim();
+  const rawMobile = (user.mobile || "").trim();
+  const uDigits = rawMobile.replace(/\D/g, "").slice(-10);
+
+  const mobileOrLinked = allOrders.filter((o: any) => {
+    if (uId && o.buyer && String(o.buyer) === uId) return true;
+    if (rawMobile && (o.buyerPhone || "").trim() === rawMobile) return true;
+    if (uDigits.length === 10) {
+      const oDigits = (o.buyerPhone || "").replace(/\D/g, "").slice(-10);
+      if (oDigits === uDigits) return true;
+    }
+    return false;
+  });
+
+  if (mobileOrLinked.length > 0) {
+    return mobileOrLinked;
+  }
+
+  if (!uEmail) return [];
+  return allOrders.filter(
+    (o: any) => (o.buyerEmail || "").toLowerCase().trim() === uEmail
+  );
+}

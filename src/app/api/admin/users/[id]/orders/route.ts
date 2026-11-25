@@ -3,7 +3,7 @@ import { getServerSession } from "next-auth";
 import authOptions from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import { User, UserRole } from "@/models/User";
-import { Order } from "@/models/Order";
+import { getSelfUserOrders } from "@/lib/webhookHelpers";
 import mongoose from "mongoose";
 
 export async function GET(
@@ -29,27 +29,8 @@ export async function GET(
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
 
-    // Match orders submitted by this user (both Buyer & Premium User) via userId, email, phone, or name
-    const conditions: any[] = [{ buyer: targetUser._id }];
-    if (targetUser.email) {
-      conditions.push({ buyerEmail: targetUser.email.toLowerCase().trim() });
-    }
-    if (targetUser.mobile) {
-      const cleanDigits = targetUser.mobile.replace(/\D/g, "").slice(-10);
-      conditions.push({ buyerPhone: targetUser.mobile });
-      if (cleanDigits.length === 10) {
-        conditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
-      }
-    }
-    if (targetUser.name) {
-      conditions.push({ buyerName: targetUser.name });
-    }
-
-    const ordersQuery: any = conditions.length > 0 ? { $or: conditions } : { buyerEmail: targetUser.email };
-
-    const orders = await Order.find(ordersQuery)
-      .sort({ createdAt: -1 })
-      .lean();
+    // Mobile-First matching (falls back to email ONLY if mobile matched 0 orders)
+    const orders = await getSelfUserOrders(targetUser);
 
     // Calculate user metrics
     const totalOrders = orders.length;

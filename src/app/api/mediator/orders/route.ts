@@ -4,7 +4,7 @@ import authOptions from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import { Order } from "@/models/Order";
 import { User } from "@/models/User";
-import { findOrderByNormalizedId } from "@/lib/webhookHelpers";
+import { findOrderByNormalizedId, getSelfUserOrders } from "@/lib/webhookHelpers";
 
 export const dynamic = "force-dynamic";
 
@@ -20,22 +20,12 @@ export async function GET() {
     const email = session.user.email.toLowerCase().trim();
     const currentUser = await User.findOne({ email }).select("mobile name _id").lean();
 
-    const matchConditions: any[] = [{ buyerEmail: email }];
-    if (currentUser?._id) {
-      matchConditions.push({ buyer: currentUser._id });
-    }
-    if (currentUser?.mobile) {
-      const cleanDigits = currentUser.mobile.replace(/\D/g, "").slice(-10);
-      matchConditions.push({ buyerPhone: currentUser.mobile });
-      if (cleanDigits.length === 10) {
-        matchConditions.push({ buyerPhone: { $regex: `${cleanDigits}$` } });
-      }
-    }
-
-    // Fetch only Order & Refund Forms filled by this Premium User themselves
-    const orders = await Order.find({ $or: matchConditions })
-      .sort({ createdAt: -1 })
-      .lean();
+    // Mobile-First matching (falls back to email ONLY if mobile matched 0 orders)
+    const orders = await getSelfUserOrders({
+      _id: currentUser?._id,
+      email,
+      mobile: currentUser?.mobile,
+    });
 
     return NextResponse.json({ success: true, orders });
   } catch (err: any) {

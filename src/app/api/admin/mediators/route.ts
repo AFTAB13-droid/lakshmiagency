@@ -4,6 +4,7 @@ import authOptions from "@/lib/auth";
 import connectToDatabase from "@/lib/db";
 import { User, UserRole } from "@/models/User";
 import { Order } from "@/models/Order";
+import { filterSelfUserOrdersFromList } from "@/lib/webhookHelpers";
 import mongoose from "mongoose";
 
 export async function GET(req: NextRequest) {
@@ -28,19 +29,7 @@ export async function GET(req: NextRequest) {
       .lean();
 
     const usersWithStats = rawPremiumUsers.map((u) => {
-      const uEmail = (u.email || "").toLowerCase().trim();
-      const uDigits = (u.mobile || "").replace(/\D/g, "").slice(-10);
-      const uId = String(u._id);
-
-      const userOrders = allOrders.filter((o: any) => {
-        if (o.buyer && String(o.buyer) === uId) return true;
-        if (uEmail && (o.buyerEmail || "").toLowerCase().trim() === uEmail) return true;
-        if (uDigits.length === 10) {
-          const oDigits = (o.buyerPhone || "").replace(/\D/g, "").slice(-10);
-          if (oDigits === uDigits) return true;
-        }
-        return false;
-      });
+      const userOrders = filterSelfUserOrdersFromList(allOrders, u);
 
       const stats = {
         totalOrders: userOrders.length,
