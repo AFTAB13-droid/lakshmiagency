@@ -17,6 +17,7 @@ import {
   Sparkles,
   ChevronRight,
   ExternalLink,
+  User,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
@@ -39,6 +40,12 @@ const navItems = [
     subLabel: "Available slots & 1-click pitches",
     href: "/mediator/deals",
     icon: Tag,
+  },
+  {
+    label: "My Profile",
+    subLabel: "Update name & mobile number",
+    href: "/mediator/profile",
+    icon: User,
   },
 ];
 

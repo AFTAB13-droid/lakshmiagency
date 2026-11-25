@@ -29,6 +29,12 @@ const navItems = [
     href: "/buyer/deals",
     icon: Tag,
   },
+  {
+    label: "My Profile",
+    subLabel: "Update name & mobile number",
+    href: "/buyer/profile",
+    icon: User,
+  },
 ];
 
 export default function BuyerSidebar() {

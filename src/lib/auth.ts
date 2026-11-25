@@ -86,13 +86,16 @@ export const authOptions: NextAuthOptions = {
       } catch {}
       return `${canonicalBase}/login`;
     },
-    async jwt({ token, user }) {
+    async jwt({ token, user, trigger, session }) {
       if (user) {
         token.id = user.id;
         // @ts-ignore
         token.role = user.role;
         // @ts-ignore
         token.mediatorCode = user.mediatorCode;
+      }
+      if (trigger === "update" && session?.name) {
+        token.name = session.name;
       }
       return token;
     },

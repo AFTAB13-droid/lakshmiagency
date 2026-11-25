@@ -75,8 +75,8 @@ const navItems = [
     icon: Settings,
   },
   {
-    label: "Security & Password",
-    subLabel: "Change admin login credentials",
+    label: "Profile & Security",
+    subLabel: "Update name, mobile & password",
     href: "/admin/security",
     icon: KeyRound,
   },

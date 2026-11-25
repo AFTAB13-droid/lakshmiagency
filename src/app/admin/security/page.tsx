@@ -18,6 +18,7 @@ import {
   UserCheck,
 } from "lucide-react";
 import { useSession } from "next-auth/react";
+import ProfileSettingsForm from "@/components/common/ProfileSettingsForm";
 
 export default function AdminSecurityPage() {
   const { data: session } = useSession();
@@ -109,6 +110,12 @@ export default function AdminSecurityPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin Profile Editor (Name & Mobile Number) */}
+      <ProfileSettingsForm
+        title="Administrator Profile"
+        subtitle="Update your admin display name and mobile number"
+      />
 
       {/* Main Grid: Form & Info Box */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
