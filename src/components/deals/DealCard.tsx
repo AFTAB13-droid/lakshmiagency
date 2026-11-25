@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import toast from "react-hot-toast";
 import SafeImage from "@/components/common/SafeImage";
 import {
@@ -19,6 +19,11 @@ import {
   Trash2,
   RefreshCw,
   MessageCircle,
+  Info,
+  Archive,
+  X,
+  Clock,
+  FileText,
 } from "lucide-react";
 
 export const getDealTypeBadge = (dealType?: string) => {
@@ -79,6 +84,112 @@ export const buildPrefilledOrderFormUrl = (
   return `${base}${sep}${params.join("&")}`;
 };
 
+export const AnimatedInfoButton = ({ onClick }: { onClick: () => void }) => (
+  <motion.button
+    type="button"
+    onClick={onClick}
+    whileHover={{ scale: 1.12 }}
+    whileTap={{ scale: 0.92 }}
+    animate={{
+      boxShadow: [
+        "0 0 0 0 rgba(99, 102, 241, 0.45)",
+        "0 0 0 7px rgba(99, 102, 241, 0)",
+      ],
+    }}
+    transition={{ repeat: Infinity, duration: 1.8, ease: "easeInOut" }}
+    className="w-7 h-7 rounded-full bg-gradient-to-tr from-indigo-600 via-plum-700 to-lotus-600 text-white flex items-center justify-center shadow-md border border-white/60 shrink-0 cursor-pointer"
+    title="View Deal Instructions & Payment Timeline"
+  >
+    <Info className="w-3.5 h-3.5" />
+  </motion.button>
+);
+
+export const DealInfoModal = ({
+  deal,
+  isOpen,
+  onClose,
+}: {
+  deal: any;
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  if (!isOpen || !deal) return null;
+  return (
+    <AnimatePresence>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-plum-950/60 backdrop-blur-sm"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.92, y: 12 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.92, y: 12 }}
+          transition={{ type: "spring", stiffness: 360, damping: 28 }}
+          onClick={(e) => e.stopPropagation()}
+          className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-indigo-200 overflow-hidden"
+        >
+          <div className="p-5 bg-gradient-to-r from-plum-900 via-indigo-900 to-lotus-900 text-white flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
+                <Info className="w-5 h-5 text-gold-300" />
+              </div>
+              <div>
+                <h3 className="font-serif font-bold text-sm sm:text-base leading-tight line-clamp-1">
+                  {deal.productName}
+                </h3>
+                <p className="text-[10px] text-white/75 font-mono">
+                  #{deal.productCode} • {deal.brandName}
+                </p>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+
+          <div className="p-5 space-y-4 text-xs">
+            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-black text-indigo-950 uppercase tracking-wider text-[11px]">
+                <FileText className="w-4 h-4 text-indigo-600" />
+                Deal Instructions &amp; Review Policy
+              </div>
+              <p className="text-indigo-950/90 leading-relaxed whitespace-pre-line font-medium">
+                {deal.instructions?.trim() ||
+                  "Follow standard marketplace review guidelines, keep the review live, and submit your Refund Form within the deadline."}
+              </p>
+            </div>
+
+            <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-black text-amber-950 uppercase tracking-wider text-[11px]">
+                <Clock className="w-4 h-4 text-amber-600" />
+                Payment Timeline &amp; Details
+              </div>
+              <p className="text-amber-950/90 leading-relaxed whitespace-pre-line font-bold">
+                {deal.paymentTimeline?.trim() ||
+                  "20–25 working days after review goes live and Refund Form is submitted."}
+              </p>
+            </div>
+          </div>
+
+          <div className="p-4 pt-0 flex justify-end">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-5 py-2.5 rounded-xl plum-gradient-bg text-white font-bold text-xs shadow-sm hover:opacity-95"
+            >
+              Got It
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
 interface DealCardProps {
   deal: any;
   mediatorCode?: string;
@@ -91,6 +202,8 @@ interface DealCardProps {
   onEdit?: (deal: any) => void;
   onDelete?: (deal: any) => void;
   onRelist?: (deal: any) => void;
+  onArchive?: (deal: any) => void;
+  onMakeLive?: (deal: any) => void;
   isAdmin?: boolean;
 }
 
@@ -106,9 +219,12 @@ export default function DealCard({
   onEdit,
   onDelete,
   onRelist,
+  onArchive,
+  onMakeLive,
   isAdmin = false,
 }: DealCardProps) {
   const [copiedLink, setCopiedLink] = useState(false);
+  const [showInfoModal, setShowInfoModal] = useState(false);
   const isFull = (deal.remainingSlots ?? 0) <= 0;
 
   // Build prefilled Google Form URL using real Entry IDs when configured
@@ -179,7 +295,8 @@ export default function DealCard({
   // =========================================================================
   if (layout === "row") {
     return (
-      <motion.div
+      <>
+        <motion.div
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.35, ease: "easeOut" }}
@@ -274,6 +391,7 @@ export default function DealCard({
                 <span className={`text-[10px] font-extrabold px-2.5 py-0.5 rounded-lg border ${dealTypeBadge.bg}`}>
                   {dealTypeBadge.label}
                 </span>
+                {!isNoInvestment && <AnimatedInfoButton onClick={() => setShowInfoModal(true)} />}
               </div>
 
               {/* Price Strip - Hidden for No Investment Deal */}
@@ -386,23 +504,6 @@ export default function DealCard({
             </div>
           )}
 
-          {/* Review Delete / Error Pricing Policy (Row View) */}
-          {!isNoInvestment && deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
-            <div className="p-2.5 rounded-2xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-xs">
-              <span className="font-bold text-rose-900 flex items-center gap-1.5">
-                <span>⚠️</span>
-                If Review Deleted / Error:
-              </span>
-              <span className="font-black text-rose-700 bg-white px-2.5 py-0.5 rounded-lg border border-rose-200 shadow-2xs">
-                {formatPricingLabel(
-                  deal.reviewDeletePricingType,
-                  deal.reviewDeleteLessAmount,
-                  deal.reviewDeleteCommissionAmount
-                )}
-              </span>
-            </div>
-          )}
-
           {/* Action Buttons Hub */}
           <div className="pt-3 border-t border-gray-100 flex flex-wrap items-center justify-between gap-3">
             {isNoInvestment ? (
@@ -469,6 +570,26 @@ export default function DealCard({
             )}
 
             <div className="flex items-center gap-2 flex-wrap">
+              {onMakeLive && deal.isActive === false && !isFull && (
+                <button
+                  onClick={() => onMakeLive(deal)}
+                  className="py-2 px-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md transition-all flex items-center gap-1.5 active:scale-95"
+                >
+                  <Zap className="w-3.5 h-3.5 text-gold-300" />
+                  Make Live
+                </button>
+              )}
+
+              {onArchive && deal.isActive !== false && !isFull && (
+                <button
+                  onClick={() => onArchive(deal)}
+                  className="py-2 px-3.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-bold transition-all flex items-center gap-1.5 border border-amber-200 shadow-2xs active:scale-95"
+                >
+                  <Archive className="w-3.5 h-3.5 text-amber-600" />
+                  Hold / Archive
+                </button>
+              )}
+
               {onRelist && isFull && (
                 <button
                   onClick={() => onRelist(deal)}
@@ -524,6 +645,8 @@ export default function DealCard({
           </div>
         </div>
       </motion.div>
+      <DealInfoModal deal={deal} isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} />
+      </>
     );
   }
 
@@ -531,6 +654,7 @@ export default function DealCard({
   // COLUMN VIEW (VERTICAL GRID CARD - DEFAULT)
   // =========================================================================
   return (
+    <>
     <motion.div
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
@@ -638,9 +762,12 @@ export default function DealCard({
               <span className="font-mono text-[10px] font-bold text-gray-400 tracking-wider">
                 #{deal.productCode}
               </span>
-              <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
-                {dealTypeBadge.label}
-              </span>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
+                  {dealTypeBadge.label}
+                </span>
+                {!isNoInvestment && <AnimatedInfoButton onClick={() => setShowInfoModal(true)} />}
+              </div>
             </div>
             <h3 className="font-bold text-plum-950 text-sm mt-1 line-clamp-2 leading-snug group-hover:text-lotus-700 transition-colors">
               {deal.productName}
@@ -747,22 +874,6 @@ export default function DealCard({
                 </div>
               </div>
 
-              {/* Review Delete / Error Pricing Policy (Column View) */}
-              {deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
-                <div className="p-2.5 rounded-2xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-[11px]">
-                  <span className="font-bold text-rose-900 flex items-center gap-1">
-                    <span>⚠️</span>
-                    Review Delete/Error:
-                  </span>
-                  <span className="font-black text-rose-700 bg-white px-2 py-0.5 rounded-lg border border-rose-200 shadow-2xs shrink-0">
-                    {formatPricingLabel(
-                      deal.reviewDeletePricingType,
-                      deal.reviewDeleteLessAmount,
-                      deal.reviewDeleteCommissionAmount
-                    )}
-                  </span>
-                </div>
-              )}
             </>
           )}
         </div>
@@ -771,9 +882,29 @@ export default function DealCard({
       {/* Action Buttons Hub matching ZMA */}
       <div className="p-4 pt-0 space-y-2.5">
         {/* Admin Quick Action Controls */}
-        {(onEdit || onDelete || onRelist) && (
+        {(onEdit || onDelete || onRelist || onArchive || onMakeLive) && (
           <div className="space-y-2">
-            {onRelist && isFull && (
+            {onMakeLive && deal.isActive === false && !isFull && (
+              <button
+                onClick={() => onMakeLive(deal)}
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 hover:from-emerald-500 hover:to-teal-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <Zap className="w-3.5 h-3.5 text-gold-300" />
+                Make Live Directly
+              </button>
+            )}
+
+            {onArchive && deal.isActive !== false && !isFull && (
+              <button
+                onClick={() => onArchive(deal)}
+                className="w-full py-2 px-3 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-200 transition-all flex items-center justify-center gap-1.5 active:scale-95"
+              >
+                <Archive className="w-3.5 h-3.5 text-amber-600" />
+                Hold / Archive Deal
+              </button>
+            )}
+
+            {onRelist && (isFull || deal.isActive === false) && (
               <button
                 onClick={() => onRelist(deal)}
                 className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white font-black text-xs shadow-md shadow-emerald-700/20 transition-all flex items-center justify-center gap-1.5 active:scale-95"
@@ -902,5 +1033,7 @@ export default function DealCard({
         )}
       </div>
     </motion.div>
+    <DealInfoModal deal={deal} isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} />
+    </>
   );
 }

@@ -47,6 +47,8 @@ export async function POST(req: NextRequest) {
       ratingSlots,
       dealType,
       description,
+      instructions,
+      paymentTimeline,
       whatsappNumber,
       whatsappMessage,
     } = body;
@@ -120,6 +122,8 @@ export async function POST(req: NextRequest) {
       remainingRating: ratSlots,
       dealType: dealType || "Original",
       description: description || "",
+      instructions: instructions || "",
+      paymentTimeline: paymentTimeline || "",
       whatsappNumber: whatsappNumber || "",
       whatsappMessage: whatsappMessage || "Hey, I want to take the No Investment Deal. Please share details!",
       isActive: true,
@@ -185,6 +189,8 @@ export async function PATCH(req: NextRequest) {
     if (updateData.reviewDeleteCommissionAmount !== undefined) deal.reviewDeleteCommissionAmount = Number(updateData.reviewDeleteCommissionAmount) || 0;
     if (updateData.dealType !== undefined) deal.dealType = updateData.dealType;
     if (updateData.description !== undefined) deal.description = updateData.description;
+    if (updateData.instructions !== undefined) deal.instructions = updateData.instructions;
+    if (updateData.paymentTimeline !== undefined) deal.paymentTimeline = updateData.paymentTimeline;
     if (updateData.whatsappNumber !== undefined) deal.whatsappNumber = updateData.whatsappNumber;
     if (updateData.whatsappMessage !== undefined) deal.whatsappMessage = updateData.whatsappMessage;
     if (updateData.isActive !== undefined) deal.isActive = Boolean(updateData.isActive);
@@ -229,10 +235,10 @@ export async function PATCH(req: NextRequest) {
         deal.remainingSlots = deal.remainingReview + deal.remainingRating;
       }
 
-      if (deal.remainingSlots > 0 && deal.isActive === false) {
-        deal.isActive = true;
-      } else if (deal.remainingSlots <= 0) {
+      if (deal.remainingSlots <= 0) {
         deal.isActive = false;
+      } else if (updateData.isActive !== undefined) {
+        deal.isActive = Boolean(updateData.isActive);
       }
     }
 

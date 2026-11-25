@@ -60,9 +60,8 @@ export default function AdminDealsPage() {
     ratingPricingType: "LESS",
     ratingLessAmount: "",
     ratingCommissionAmount: "",
-    reviewDeletePricingType: "NONE",
-    reviewDeleteLessAmount: "",
-    reviewDeleteCommissionAmount: "",
+    instructions: "",
+    paymentTimeline: "",
     reviewSlots: "10",
     ratingSlots: "10",
     dealType: "Original",
@@ -89,9 +88,8 @@ export default function AdminDealsPage() {
       ratingPricingType: "LESS",
       ratingLessAmount: "",
       ratingCommissionAmount: "",
-      reviewDeletePricingType: "NONE",
-      reviewDeleteLessAmount: "",
-      reviewDeleteCommissionAmount: "",
+      instructions: "",
+      paymentTimeline: "",
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: "Original",
@@ -128,9 +126,8 @@ export default function AdminDealsPage() {
       ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
       ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
       ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
-      reviewDeletePricingType: deal.reviewDeletePricingType || "NONE",
-      reviewDeleteLessAmount: deal.reviewDeleteLessAmount !== undefined ? String(deal.reviewDeleteLessAmount) : "",
-      reviewDeleteCommissionAmount: deal.reviewDeleteCommissionAmount !== undefined ? String(deal.reviewDeleteCommissionAmount) : "",
+      instructions: deal.instructions || "",
+      paymentTimeline: deal.paymentTimeline || "",
       reviewSlots: deal.reviewSlots !== undefined ? String(deal.reviewSlots) : "10",
       ratingSlots: deal.ratingSlots !== undefined ? String(deal.ratingSlots) : "10",
       dealType: deal.dealType || "Original",
@@ -161,9 +158,8 @@ export default function AdminDealsPage() {
       ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
       ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
       ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
-      reviewDeletePricingType: deal.reviewDeletePricingType || "NONE",
-      reviewDeleteLessAmount: deal.reviewDeleteLessAmount !== undefined ? String(deal.reviewDeleteLessAmount) : "",
-      reviewDeleteCommissionAmount: deal.reviewDeleteCommissionAmount !== undefined ? String(deal.reviewDeleteCommissionAmount) : "",
+      instructions: deal.instructions || "",
+      paymentTimeline: deal.paymentTimeline || "",
       reviewSlots: "10",
       ratingSlots: "10",
       dealType: deal.dealType || "Original",
@@ -172,6 +168,52 @@ export default function AdminDealsPage() {
       whatsappMessage: deal.whatsappMessage || "Hey, I want to take the No Investment Deal. Please share details!",
     });
     setShowModal(true);
+  };
+
+  const handleArchiveDeal = async (deal: any) => {
+    const toastId = toast.loading(`Moving #${deal.productCode} to Hold / Archive...`);
+    try {
+      const res = await fetch("/api/admin/deals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deal._id, isActive: false }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Deal #${deal.productCode} archived (on hold)!`, { id: toastId });
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to archive deal", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error", { id: toastId });
+    }
+  };
+
+  const handleMakeLiveDirect = async (deal: any) => {
+    if ((deal.remainingSlots ?? 0) <= 0) {
+      toast("0 stock remaining — set new stock to go live!", { icon: "📦" });
+      handleRelist(deal);
+      return;
+    }
+    const toastId = toast.loading(`Making #${deal.productCode} live...`);
+    try {
+      const res = await fetch("/api/admin/deals", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: deal._id, isActive: true }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(`Deal #${deal.productCode} is now LIVE!`, { id: toastId });
+        setActiveTab("active");
+        fetchData();
+      } else {
+        toast.error(data.error || "Failed to activate deal", { id: toastId });
+      }
+    } catch {
+      toast.error("Network error", { id: toastId });
+    }
   };
 
   const handleDelete = async (deal: any) => {
@@ -295,10 +337,10 @@ export default function AdminDealsPage() {
   };
 
   // Separation:
-  // Active: Deals where remainingSlots > 0 (even if rating slots are 0 and review slots remain)
-  // Archived: Deals where ALL slots are completely finished (remainingSlots <= 0)
-  const activeDealsList = deals.filter((d) => (d.remainingSlots ?? 0) > 0);
-  const archivedDealsList = deals.filter((d) => (d.remainingSlots ?? 0) <= 0);
+  // Active: Deals where isActive !== false AND remainingSlots > 0
+  // Archived / On Hold: Deals manually archived (isActive === false) OR sold out (remainingSlots <= 0)
+  const activeDealsList = deals.filter((d) => d.isActive !== false && (d.remainingSlots ?? 0) > 0);
+  const archivedDealsList = deals.filter((d) => d.isActive === false || (d.remainingSlots ?? 0) <= 0);
 
   const baseDeals = activeTab === "active" ? activeDealsList : archivedDealsList;
 
@@ -363,7 +405,7 @@ export default function AdminDealsPage() {
             }`}
           >
             <Archive className="w-3.5 h-3.5 text-amber-400" />
-            Archived / Sold Out ({archivedDealsList.length})
+            Archived / On Hold ({archivedDealsList.length})
           </button>
         </div>
 
@@ -444,7 +486,7 @@ export default function AdminDealsPage() {
         </div>
       ) : viewMode === "grid" ? (
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {paginatedDeals.map((deal) => (
               <DealCard
                 key={deal._id}
@@ -453,6 +495,8 @@ export default function AdminDealsPage() {
                 onEdit={handleEdit}
                 onDelete={handleDelete}
                 onRelist={handleRelist}
+                onArchive={handleArchiveDeal}
+                onMakeLive={handleMakeLiveDirect}
                 isAdmin={true}
               />
             ))}
@@ -584,7 +628,11 @@ export default function AdminDealsPage() {
                         {deal.dealType === "No Investment" ? "Direct" : `${deal.remainingSlots} / ${deal.totalSlots}`}
                       </td>
                       <td className="p-4 sm:p-5">
-                        {deal.dealType === "No Investment" ? (
+                        {deal.isActive === false && !isCompleted ? (
+                          <span className="px-2.5 py-1 rounded-full bg-amber-50 text-amber-800 font-bold text-[10px] border border-amber-300">
+                            On Hold (Archived)
+                          </span>
+                        ) : deal.dealType === "No Investment" ? (
                           <span className="px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-800 font-bold text-[10px] border border-emerald-300">
                             Active (Take Deal)
                           </span>
@@ -600,14 +648,35 @@ export default function AdminDealsPage() {
                       </td>
                       <td className="p-4 sm:p-5 text-right">
                         <div className="flex items-center justify-end gap-1.5">
-                          {isCompleted && (
+                          {(deal.isActive === false || isCompleted) ? (
+                            <>
+                              {!isCompleted && (
+                                <button
+                                  onClick={() => handleMakeLiveDirect(deal)}
+                                  className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-700 text-white font-bold text-xs shadow-2xs hover:opacity-95 transition-all flex items-center gap-1 active:scale-95"
+                                  title="Make this deal live immediately"
+                                >
+                                  <Zap className="w-3.5 h-3.5 text-gold-300" />
+                                  <span className="hidden sm:inline text-[11px]">Make Live</span>
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleRelist(deal)}
+                                className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 font-bold text-xs hover:bg-emerald-100 transition-all flex items-center gap-1 active:scale-95"
+                                title="Update stock & relist"
+                              >
+                                <RefreshCw className="w-3.5 h-3.5 text-emerald-600" />
+                                <span className="hidden sm:inline text-[11px]">Relist</span>
+                              </button>
+                            </>
+                          ) : (
                             <button
-                              onClick={() => handleRelist(deal)}
-                              className="px-2.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white font-bold text-xs shadow-2xs hover:from-emerald-500 hover:to-emerald-600 transition-all flex items-center gap-1 active:scale-95"
-                              title="Relist completed deal with new stock"
+                              onClick={() => handleArchiveDeal(deal)}
+                              className="px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 font-bold text-xs transition-all flex items-center gap-1 active:scale-95"
+                              title="Hold / Archive deal"
                             >
-                              <RefreshCw className="w-3.5 h-3.5 text-emerald-200" />
-                              <span className="hidden sm:inline text-[11px]">Relist</span>
+                              <Archive className="w-3.5 h-3.5 text-amber-600" />
+                              <span className="hidden sm:inline text-[11px]">Hold</span>
                             </button>
                           )}
                           <button
@@ -1106,65 +1175,42 @@ export default function AdminDealsPage() {
                 </div>
               )}
 
-              {/* Review Delete / Error Pricing Box */}
-              <div className="p-4 rounded-2xl bg-rose-50/60 border border-rose-200 space-y-3">
+              {/* Deal Instructions & Payment Timeline (Shown in Info Popup + WhatsApp Pitch & Announcement) */}
+              <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200 space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-rose-950 flex items-center gap-1.5">
-                    ⚠️ Review Delete / Error Pricing
+                  <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                    ℹ️ Deal Instructions &amp; Payment Timeline
                   </span>
-                  <span className="text-[10px] text-rose-700 font-semibold">
-                    Shown to Buyers &amp; Mediators
+                  <span className="text-[10px] text-indigo-700 font-semibold">
+                    Shown in Card Info Popup &amp; Auto-Synced to WhatsApp
                   </span>
                 </div>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                  {[
-                    { id: "NONE", label: "Not Set" },
-                    { id: "LESS", label: "Less Deal" },
-                    { id: "FULL_REFUND", label: "Full Refund" },
-                    { id: "COMMISSION", label: "Commission" },
-                  ].map((p) => (
-                    <button
-                      key={p.id}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, reviewDeletePricingType: p.id })}
-                      className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
-                        formData.reviewDeletePricingType === p.id
-                          ? p.id === "NONE"
-                            ? "bg-gray-700 text-white shadow-sm"
-                            : "bg-rose-600 text-white shadow-sm"
-                          : "bg-white text-gray-600 border border-rose-200 hover:bg-rose-50"
-                      }`}
-                    >
-                      {p.label}
-                    </button>
-                  ))}
+
+                <div>
+                  <label className="block text-xs font-semibold text-indigo-950 mb-1">
+                    Deal Instructions &amp; Review Rules <span className="text-gray-400 font-normal">(e.g. review delete/error rules, steps, conditions)</span>
+                  </label>
+                  <textarea
+                    rows={3}
+                    value={formData.instructions}
+                    onChange={(e) => setFormData({ ...formData, instructions: e.target.value })}
+                    placeholder="e.g. Keep review live for at least 30 days. If review is deleted by marketplace or has an error, contact admin immediately..."
+                    className="w-full p-2.5 rounded-xl border border-indigo-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-800"
+                  />
                 </div>
-                {formData.reviewDeletePricingType === "LESS" && (
-                  <div>
-                    <label className="block text-xs font-semibold text-rose-950 mb-1">Review Delete / Error Less Amount (₹) *</label>
-                    <input
-                      type="number"
-                      value={formData.reviewDeleteLessAmount}
-                      onChange={(e) => setFormData({ ...formData, reviewDeleteLessAmount: e.target.value })}
-                      placeholder="e.g. 100"
-                      required
-                      className="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 font-bold text-rose-700"
-                    />
-                  </div>
-                )}
-                {formData.reviewDeletePricingType === "COMMISSION" && (
-                  <div>
-                    <label className="block text-xs font-semibold text-rose-950 mb-1">Review Delete / Error Commission (₹) *</label>
-                    <input
-                      type="number"
-                      value={formData.reviewDeleteCommissionAmount}
-                      onChange={(e) => setFormData({ ...formData, reviewDeleteCommissionAmount: e.target.value })}
-                      placeholder="e.g. 20"
-                      required
-                      className="w-full px-3 py-2 rounded-xl border border-rose-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-rose-400 font-bold text-emerald-700"
-                    />
-                  </div>
-                )}
+
+                <div>
+                  <label className="block text-xs font-semibold text-indigo-950 mb-1">
+                    Payment Timeline &amp; Details
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.paymentTimeline}
+                    onChange={(e) => setFormData({ ...formData, paymentTimeline: e.target.value })}
+                    placeholder="e.g. 20–25 working days after review goes live & Refund Form is submitted"
+                    className="w-full px-3 py-2 rounded-xl border border-indigo-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 text-gray-800 font-medium"
+                  />
+                </div>
               </div>
             </>
           )}

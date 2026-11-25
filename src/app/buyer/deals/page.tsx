@@ -7,7 +7,13 @@ import SafeImage from "@/components/common/SafeImage";
 import Pagination from "@/components/common/Pagination";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
 import CustomDropdown from "@/components/common/CustomDropdown";
-import { getDealTypeBadge, formatPricingLabel, buildPrefilledOrderFormUrl } from "@/components/deals/DealCard";
+import {
+  getDealTypeBadge,
+  formatPricingLabel,
+  buildPrefilledOrderFormUrl,
+  AnimatedInfoButton,
+  DealInfoModal,
+} from "@/components/deals/DealCard";
 import {
   Tag,
   Search,
@@ -41,8 +47,9 @@ export default function BuyerDealsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(12);
 
-  // Copied states
+  // Copied & Info Modal states
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
+  const [infoModalDeal, setInfoModalDeal] = useState<any | null>(null);
 
   useEffect(() => {
     fetch("/api/deals")
@@ -325,7 +332,7 @@ export default function BuyerDealsPage() {
         </div>
       ) : viewMode === "column" ? (
         /* GRID / COLUMN VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
           {paginatedDeals.map((deal) => {
             const mkt = getMarketplaceInfo(deal.marketplace, deal.productLink);
             const dealTypeBadge = getDealTypeBadge(deal.dealType);
@@ -410,9 +417,12 @@ export default function BuyerDealsPage() {
                         <span className="text-[10px] font-extrabold uppercase text-gray-400 tracking-wider">
                           {deal.brandName}
                         </span>
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
-                          {dealTypeBadge.label}
-                        </span>
+                        <div className="flex items-center gap-1.5">
+                          <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border ${dealTypeBadge.bg}`}>
+                            {dealTypeBadge.label}
+                          </span>
+                          {!isNoInvestment && <AnimatedInfoButton onClick={() => setInfoModalDeal(deal)} />}
+                        </div>
                       </div>
                       <h3 className="font-bold text-plum-950 text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-lotus-700 transition-colors">
                         {deal.productName}
@@ -495,23 +505,6 @@ export default function BuyerDealsPage() {
                             </span>
                           </div>
                         </div>
-
-                        {/* Review Delete / Error Pricing Policy (Buyer Column View) */}
-                        {deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
-                          <div className="p-2 rounded-xl bg-rose-50/90 border border-rose-200 flex items-center justify-between gap-2 text-[10px]">
-                            <span className="font-bold text-rose-900 flex items-center gap-1">
-                              <span>⚠️</span>
-                              Review Delete/Error:
-                            </span>
-                            <span className="font-black text-rose-700 bg-white px-2 py-0.5 rounded-md border border-rose-200 shrink-0">
-                              {formatPricingLabel(
-                                deal.reviewDeletePricingType,
-                                deal.reviewDeleteLessAmount,
-                                deal.reviewDeleteCommissionAmount
-                              )}
-                            </span>
-                          </div>
-                        )}
                       </>
                     )}
                   </div>
@@ -646,6 +639,7 @@ export default function BuyerDealsPage() {
                         {dealTypeBadge.label}
                       </span>
                       <span className="font-mono text-[10px] text-gray-400">#{deal.productCode}</span>
+                      {!isNoInvestment && <AnimatedInfoButton onClick={() => setInfoModalDeal(deal)} />}
                     </div>
                     <h3 className="font-bold text-plum-950 text-sm sm:text-base mt-1 line-clamp-1 group-hover:text-lotus-700 transition-colors">
                       {deal.productName}
@@ -667,18 +661,6 @@ export default function BuyerDealsPage() {
                         <p className="text-[11px] leading-relaxed font-medium text-emerald-900 line-clamp-2">
                           {deal.description}
                         </p>
-                      </div>
-                    )}
-                    {!isNoInvestment && deal.reviewDeletePricingType && deal.reviewDeletePricingType !== "NONE" && (
-                      <div className="mt-1.5 inline-flex items-center gap-2 px-2.5 py-1 rounded-xl bg-rose-50 border border-rose-200 text-[10px]">
-                        <span className="font-bold text-rose-900">⚠️ Review Delete/Error:</span>
-                        <span className="font-black text-rose-700">
-                          {formatPricingLabel(
-                            deal.reviewDeletePricingType,
-                            deal.reviewDeleteLessAmount,
-                            deal.reviewDeleteCommissionAmount
-                          )}
-                        </span>
                       </div>
                     )}
                   </div>
@@ -802,6 +784,13 @@ export default function BuyerDealsPage() {
           pageSizeOptions={[12, 24, 48]}
         />
       )}
+
+      {/* Deal Instructions & Payment Timeline Popup */}
+      <DealInfoModal
+        deal={infoModalDeal}
+        isOpen={!!infoModalDeal}
+        onClose={() => setInfoModalDeal(null)}
+      />
     </div>
   );
 }

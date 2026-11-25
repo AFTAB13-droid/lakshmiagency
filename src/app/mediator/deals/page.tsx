@@ -102,7 +102,20 @@ export default function MediatorDealsPage() {
       .replace(/{lessAmount}/g, deal.lessAmount || 0)
       .replace(/{commission}/g, deal.commissionAmount || 0)
       .replace(/{remainingSlots}/g, deal.remainingSlots)
-      .replace(/{orderFormUrl}/g, formUrl);
+      .replace(/{orderFormUrl}/g, formUrl)
+      .replace(/{instructions}/g, deal.instructions || "")
+      .replace(/{paymentTimeline}/g, deal.paymentTimeline || "");
+
+    const extraLines: string[] = [];
+    if (deal.instructions?.trim() && !template.includes(deal.instructions.trim())) {
+      extraLines.push(`📋 *Instructions:* ${deal.instructions.trim()}`);
+    }
+    if (deal.paymentTimeline?.trim() && !template.includes(deal.paymentTimeline.trim())) {
+      extraLines.push(`⏱️ *Payment Timeline:* ${deal.paymentTimeline.trim()}`);
+    }
+    if (extraLines.length > 0) {
+      template += `\n\n${extraLines.join("\n")}`;
+    }
 
     setGeneratedPitch(template);
     setActiveMessageDeal(deal);
@@ -128,7 +141,20 @@ export default function MediatorDealsPage() {
       .replace(/{price}/g, deal.price)
       .replace(/{offerModel}/g, offerModel)
       .replace(/{lessAmount}/g, deal.lessAmount || 0)
-      .replace(/{remainingSlots}/g, deal.remainingSlots);
+      .replace(/{remainingSlots}/g, deal.remainingSlots)
+      .replace(/{instructions}/g, deal.instructions || "")
+      .replace(/{paymentTimeline}/g, deal.paymentTimeline || "");
+
+    const extraLines: string[] = [];
+    if (deal.instructions?.trim() && !template.includes(deal.instructions.trim())) {
+      extraLines.push(`📋 *Instructions:* ${deal.instructions.trim()}`);
+    }
+    if (deal.paymentTimeline?.trim() && !template.includes(deal.paymentTimeline.trim())) {
+      extraLines.push(`⏱️ *Payment Timeline:* ${deal.paymentTimeline.trim()}`);
+    }
+    if (extraLines.length > 0) {
+      template += `\n\n${extraLines.join("\n")}`;
+    }
 
     setGeneratedAnnouncement(template);
     setActiveAnnouncementDeal(deal);
@@ -301,7 +327,7 @@ export default function MediatorDealsPage() {
       ) : viewMode === "column" ? (
         /* Column View (Grid of big cards) */
         <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
             {paginatedDeals.map((deal) => (
               <DealCard
                 key={deal._id}

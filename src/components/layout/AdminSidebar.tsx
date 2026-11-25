@@ -20,6 +20,7 @@ import {
   ChevronRight,
   KeyRound,
   Award,
+  Layers,
 } from "lucide-react";
 import { useSidebar } from "@/context/SidebarContext";
 import ThreeEmblem from "@/components/common/ThreeEmblem";
@@ -36,6 +37,12 @@ const navItems = [
     subLabel: "Manage products & review slots",
     href: "/admin/deals",
     icon: Tag,
+  },
+  {
+    label: "Stocks Hub",
+    subLabel: "Brand & product stock capacity",
+    href: "/admin/stocks",
+    icon: Layers,
   },
   {
     label: "Brands & Platforms",

@@ -47,6 +47,8 @@ export interface IDeal extends Document {
 
   dealType: "Original" | "Empty Box" | "Exchange" | "No Investment";
   description?: string;
+  instructions?: string;
+  paymentTimeline?: string;
   whatsappNumber?: string;
   whatsappMessage?: string;
   assignedMediators?: mongoose.Types.ObjectId[];
@@ -118,6 +120,8 @@ const DealSchema = new Schema<IDeal>(
 
     dealType: { type: String, enum: ["Original", "Empty Box", "Exchange", "No Investment"], default: "Original" },
     description: { type: String, default: "" },
+    instructions: { type: String, default: "" },
+    paymentTimeline: { type: String, default: "" },
     whatsappNumber: { type: String, default: "" },
     whatsappMessage: { type: String, default: "Hey, I want to take the No Investment Deal. Please share details!" },
     assignedMediators: [{ type: Schema.Types.ObjectId, ref: "User" }],
