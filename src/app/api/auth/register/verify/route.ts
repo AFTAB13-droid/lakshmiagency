@@ -48,8 +48,8 @@ export async function POST(req: NextRequest) {
       password,
       role: role as UserRole,
       mediatorCode: finalMediatorCode,
-      isActive: isMediator ? false : true,
-      mediatorApprovalStatus: isMediator ? "PENDING" : "APPROVED",
+      isActive: false,
+      mediatorApprovalStatus: "PENDING",
     });
 
     // Clean up OTP record
@@ -57,14 +57,12 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      message: isMediator
-        ? "Your mediator registration is under verification. Once approved by admin, you will be able to log in."
-        : "Account verified and registered successfully!",
+      message: "Your registration is under verification. Once approved by admin, you will be able to log in.",
       userId: newUser._id,
       role: newUser.role,
       isMediator,
       mediatorCode: finalMediatorCode,
-      approvalStatus: isMediator ? "PENDING" : "APPROVED",
+      approvalStatus: "PENDING",
     });
   } catch (error: any) {
     console.error("Register verify error:", error);

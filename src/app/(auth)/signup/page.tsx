@@ -198,16 +198,9 @@ export default function SignUpPage() {
           colors: ["#D4AF37", "#E83A89", "#520D38", "#FFD700"],
         });
 
-        if (data.isMediator || role === "PREMIUM_USER") {
-          setRegisteredCode(data.mediatorCode || formData.mediatorCode);
-          setStep("MEDIATOR_PENDING");
-          toast.success("Registration submitted! Under admin verification.");
-        } else {
-          toast.success("Account created successfully! Redirecting...");
-          setTimeout(() => {
-            router.push("/login");
-          }, 1800);
-        }
+        setRegisteredCode(data.mediatorCode || formData.mediatorCode);
+        setStep("MEDIATOR_PENDING");
+        toast.success("Registration submitted! Under admin verification.");
       } else {
         triggerShake();
         toast.error(data.error || "Verification failed");
@@ -258,7 +251,7 @@ export default function SignUpPage() {
           </h2>
           <p className="text-xs sm:text-sm text-gray-500 font-medium mt-1">
             {step === "MEDIATOR_PENDING"
-              ? "Your Premium User registration request is under administrative review"
+              ? "Your registration request is under administrative review"
               : step === "DETAILS"
               ? "Join Lakshmi Agency to track orders, feedback slots & verified payouts"
               : `Enter the 6-digit verification code sent to ${formData.email}`}
@@ -279,7 +272,7 @@ export default function SignUpPage() {
                 Application Received!
               </h3>
               <p className="text-xs sm:text-sm text-gray-600 max-w-md mx-auto leading-relaxed">
-                Thank you, <strong>{formData.name}</strong>. Your Premium User account request has been submitted to Lakshmi Agency Administration.
+                Thank you, <strong>{formData.name}</strong>. Your account request has been submitted to Lakshmi Agency Administration.
               </p>
             </div>
 

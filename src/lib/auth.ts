@@ -43,8 +43,8 @@ export const authOptions: NextAuthOptions = {
           throw new Error("Invalid email or password");
         }
 
-        // Mediator verification check: unapproved or rejected mediators cannot log in
-        if (user.role === UserRole.PREMIUM_USER) {
+        // Verification check for all self-registered users (Buyers & Premium Users)
+        if (user.role !== UserRole.ADMIN) {
           if (user.mediatorApprovalStatus === "PENDING") {
             throw new Error("Your request is under verification. Once admin approves your request, you can login.");
           }

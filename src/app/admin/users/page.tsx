@@ -19,6 +19,10 @@ import {
   UserCheck,
   CreditCard,
   Trash2,
+  UserPlus,
+  Clock,
+  X,
+  RotateCcw,
 } from "lucide-react";
 import UserDetailsModal from "@/components/admin/UserDetailsModal";
 import Pagination from "@/components/common/Pagination";
@@ -29,7 +33,24 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [roleFilter, setRoleFilter] = useState("ALL");
+  const [activeTab, setActiveTab] = useState<"ALL" | "BUYER_REQUESTS">("ALL");
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  // Create User Modal State
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [createForm, setCreateForm] = useState({
+    name: "",
+    email: "",
+    mobile: "",
+    password: "",
+    role: "USER",
+  });
+
+  // Approval Action State
+  const [processingApprovalId, setProcessingApprovalId] = useState<string | null>(null);
+  const [rejectingUser, setRejectingUser] = useState<any | null>(null);
+  const [rejectReason, setRejectReason] = useState("");
 
   // Pagination states
   const [currentPage, setCurrentPage] = useState(1);
@@ -93,7 +114,79 @@ export default function AdminUsersPage() {
     }
   };
 
-  const filteredUsers = users.filter((u) => {
+  const handleCreateUser = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!createForm.name || !createForm.email || !createForm.mobile || !createForm.password) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    setCreating(true);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(createForm),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(data.message || "User created and ready to log in!");
+        setUsers((prev) => [data.user, ...prev]);
+        setShowCreateModal(false);
+        setCreateForm({ name: "", email: "", mobile: "", password: "", role: "USER" });
+      } else {
+        toast.error(data.error || "Failed to create user");
+      }
+    } catch {
+      toast.error("Network error while creating user");
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  const handleApprovalAction = async (
+    userId: string,
+    action: "APPROVE" | "REJECT" | "RESET_PENDING",
+    reason?: string
+  ) => {
+    setProcessingApprovalId(userId);
+    try {
+      const res = await fetch("/api/admin/users", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ userId, action, reason }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        toast.success(
+          action === "APPROVE"
+            ? "User approved & activated!"
+            : action === "REJECT"
+            ? "User request rejected"
+            : "Moved back to pending queue"
+        );
+        setUsers((prev) => prev.map((u) => (u._id === userId ? data.user : u)));
+        setRejectingUser(null);
+        setRejectReason("");
+      } else {
+        toast.error(data.error || "Action failed");
+      }
+    } catch {
+      toast.error("Network error");
+    } finally {
+      setProcessingApprovalId(null);
+    }
+  };
+
+  const buyerRequests = users.filter(
+    (u) =>
+      u.role === "USER" &&
+      (u.mediatorApprovalStatus === "PENDING" || u.mediatorApprovalStatus === "REJECTED")
+  );
+  const pendingBuyerCount = users.filter(
+    (u) => u.role === "USER" && u.mediatorApprovalStatus === "PENDING"
+  ).length;
+
+  const filteredUsers = (activeTab === "BUYER_REQUESTS" ? buyerRequests : users).filter((u) => {
     const q = search.toLowerCase();
     const matchesSearch =
       u.name?.toLowerCase().includes(q) ||
@@ -101,7 +194,7 @@ export default function AdminUsersPage() {
       (u.mobile && u.mobile.includes(q)) ||
       (u.mediatorCode && u.mediatorCode.toLowerCase().includes(q));
 
-    const matchesRole = roleFilter === "ALL" || u.role === roleFilter;
+    const matchesRole = activeTab === "BUYER_REQUESTS" || roleFilter === "ALL" || u.role === roleFilter;
     return matchesSearch && matchesRole;
   });
 
@@ -113,7 +206,7 @@ export default function AdminUsersPage() {
   // Reset to page 1 when search or filter changes
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, roleFilter]);
+  }, [search, roleFilter, activeTab]);
 
   // Summary Metrics
   const totalMediators = users.filter((u) => u.role === "PREMIUM_USER").length;
@@ -133,7 +226,7 @@ export default function AdminUsersPage() {
           </p>
         </div>
 
-        {/* Counter Pills */}
+        {/* Counter Pills & Create Button */}
         <div className="flex items-center gap-2 flex-wrap">
           <div className="px-3.5 py-1.5 rounded-2xl bg-white border border-plum-100 shadow-2xs flex items-center gap-2 text-xs">
             <span className="w-2 h-2 rounded-full bg-gold-500" />
@@ -150,7 +243,50 @@ export default function AdminUsersPage() {
             <span className="text-gray-500">Active:</span>
             <strong className="text-emerald-700 font-black">{activeUsers}</strong>
           </div>
+          <button
+            onClick={() => setShowCreateModal(true)}
+            className="px-4 py-2 rounded-2xl bg-gradient-to-r from-plum-800 to-plum-950 hover:from-plum-700 hover:to-plum-900 text-white text-xs font-black shadow-md shadow-plum-900/15 flex items-center gap-1.5 transition-all active:scale-95"
+          >
+            <UserPlus className="w-3.5 h-3.5 text-gold-400" />
+            + Create User
+          </button>
         </div>
+      </div>
+
+      {/* Tabs Bar */}
+      <div className="flex items-center gap-2 flex-wrap">
+        <button
+          onClick={() => setActiveTab("ALL")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border ${
+            activeTab === "ALL"
+              ? "bg-plum-900 text-white border-plum-900 shadow-sm"
+              : "bg-white text-plum-900 border-plum-200 hover:bg-plum-50"
+          }`}
+        >
+          All Users ({users.length})
+        </button>
+        <button
+          onClick={() => setActiveTab("BUYER_REQUESTS")}
+          className={`px-4 py-2 rounded-2xl text-xs font-black transition-all border flex items-center gap-2 ${
+            activeTab === "BUYER_REQUESTS"
+              ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+              : "bg-white text-amber-800 border-amber-200 hover:bg-amber-50"
+          }`}
+        >
+          <Clock className="w-3.5 h-3.5" />
+          Buyer Approval Requests ({buyerRequests.length})
+          {pendingBuyerCount > 0 && (
+            <span
+              className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                activeTab === "BUYER_REQUESTS"
+                  ? "bg-white text-amber-700"
+                  : "bg-amber-500 text-white animate-pulse"
+              }`}
+            >
+              {pendingBuyerCount} Pending
+            </span>
+          )}
+        </button>
       </div>
 
       {/* Search and Filters Bar */}
@@ -312,21 +448,64 @@ export default function AdminUsersPage() {
 
                       {/* Account Status Toggle */}
                       <td className="p-4 sm:p-5 text-center">
-                        <button
-                          onClick={() => handleToggleActive(u._id, u.isActive)}
-                          className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border transition-all ${
-                            u.isActive
-                              ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
-                              : "bg-red-50 text-red-700 border-red-300 hover:bg-red-100"
-                          }`}
-                        >
-                          {u.isActive ? "Active" : "Disabled"}
-                        </button>
+                        {u.mediatorApprovalStatus === "PENDING" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-black uppercase tracking-wider">
+                            <Clock className="w-3 h-3" /> Pending Approval
+                          </span>
+                        ) : u.mediatorApprovalStatus === "REJECTED" ? (
+                          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-red-100 text-red-700 border border-red-200 text-[10px] font-black uppercase tracking-wider">
+                            <XCircle className="w-3 h-3" /> Rejected
+                          </span>
+                        ) : (
+                          <button
+                            onClick={() => handleToggleActive(u._id, u.isActive)}
+                            className={`px-3 py-1 rounded-full text-[10px] font-extrabold uppercase tracking-wider border transition-all ${
+                              u.isActive
+                                ? "bg-emerald-50 text-emerald-700 border-emerald-300 hover:bg-emerald-100"
+                                : "bg-red-50 text-red-700 border-red-300 hover:bg-red-100"
+                            }`}
+                          >
+                            {u.isActive ? "Active" : "Disabled"}
+                          </button>
+                        )}
                       </td>
 
-                      {/* Actions: Details Modal Trigger & WhatsApp */}
+                      {/* Actions: Approval, Details Modal Trigger & Delete */}
                       <td className="p-4 sm:p-5 text-right">
-                        <div className="flex items-center justify-end gap-2">
+                        <div className="flex items-center justify-end gap-2 flex-wrap">
+                          {u.mediatorApprovalStatus === "PENDING" && (
+                            <>
+                              <button
+                                onClick={() => handleApprovalAction(u._id, "APPROVE")}
+                                disabled={processingApprovalId === u._id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-[11px] font-bold shadow-2xs transition-all disabled:opacity-50"
+                              >
+                                <CheckCircle2 className="w-3.5 h-3.5" />
+                                Approve
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setRejectingUser(u);
+                                  setRejectReason("");
+                                }}
+                                disabled={processingApprovalId === u._id}
+                                className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 text-[11px] font-bold transition-all disabled:opacity-50"
+                              >
+                                <XCircle className="w-3.5 h-3.5" />
+                                Reject
+                              </button>
+                            </>
+                          )}
+                          {u.mediatorApprovalStatus === "REJECTED" && (
+                            <button
+                              onClick={() => handleApprovalAction(u._id, "RESET_PENDING")}
+                              disabled={processingApprovalId === u._id}
+                              className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 border border-amber-200 text-[11px] font-bold transition-all disabled:opacity-50"
+                            >
+                              <RotateCcw className="w-3.5 h-3.5" />
+                              Re-evaluate
+                            </button>
+                          )}
                           <button
                             onClick={() => setSelectedUserId(u._id)}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-gradient-to-r from-plum-900 to-lotus-800 hover:from-plum-950 hover:to-lotus-900 text-white text-xs font-bold shadow-sm shadow-plum-950/20 hover:scale-105 active:scale-95 transition-all"
@@ -374,6 +553,214 @@ export default function AdminUsersPage() {
           onClose={() => setSelectedUserId(null)}
         />
       )}
+
+      {/* Create User Modal (Direct Login without OTP/Approval) */}
+      <AnimatePresence>
+        {showCreateModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-plum-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setShowCreateModal(false)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-white rounded-3xl border border-plum-100 shadow-2xl overflow-hidden"
+            >
+              <div className="px-6 py-4 bg-gradient-to-r from-plum-900 to-plum-950 text-white flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <UserPlus className="w-5 h-5 text-gold-400" />
+                  <div>
+                    <h3 className="font-serif font-bold text-base">Create User Account</h3>
+                    <p className="text-[11px] text-plum-200">Pre-approved for immediate login</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setShowCreateModal(false)}
+                  className="p-1.5 rounded-xl bg-white/10 hover:bg-white/20 transition-colors"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+
+              <form onSubmit={handleCreateUser} className="p-6 space-y-4">
+                <div>
+                  <label className="block text-[11px] font-black text-plum-900 uppercase tracking-wider mb-1">
+                    Account Role
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm((f) => ({ ...f, role: "USER" }))}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                        createForm.role === "USER"
+                          ? "bg-plum-900 text-white border-plum-900 shadow-sm"
+                          : "bg-plum-50/50 text-plum-800 border-plum-200 hover:bg-plum-50"
+                      }`}
+                    >
+                      <User className="w-3.5 h-3.5" />
+                      Buyer
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCreateForm((f) => ({ ...f, role: "PREMIUM_USER" }))}
+                      className={`py-2.5 px-3 rounded-xl text-xs font-bold border transition-all flex items-center justify-center gap-1.5 ${
+                        createForm.role === "PREMIUM_USER"
+                          ? "bg-amber-600 text-white border-amber-600 shadow-sm"
+                          : "bg-amber-50/50 text-amber-900 border-amber-200 hover:bg-amber-50"
+                      }`}
+                    >
+                      <Award className="w-3.5 h-3.5" />
+                      Premium User
+                    </button>
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black text-plum-900 uppercase tracking-wider mb-1">
+                    Full Name *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    value={createForm.name}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, name: e.target.value }))}
+                    placeholder="e.g. Rahul Sharma"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-plum-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black text-plum-900 uppercase tracking-wider mb-1">
+                    Email (Login ID) *
+                  </label>
+                  <input
+                    type="email"
+                    required
+                    value={createForm.email}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, email: e.target.value }))}
+                    placeholder="user@example.com"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-plum-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black text-plum-900 uppercase tracking-wider mb-1">
+                    Mobile / WhatsApp Number *
+                  </label>
+                  <input
+                    type="tel"
+                    required
+                    value={createForm.mobile}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, mobile: e.target.value }))}
+                    placeholder="9876543210"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-plum-400"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-black text-plum-900 uppercase tracking-wider mb-1">
+                    Password (min 6 chars) *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    minLength={6}
+                    value={createForm.password}
+                    onChange={(e) => setCreateForm((f) => ({ ...f, password: e.target.value }))}
+                    placeholder="Set login password"
+                    className="w-full px-3.5 py-2.5 rounded-xl border border-plum-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-plum-400"
+                  />
+                </div>
+
+                <div className="p-3 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-800 font-medium">
+                  This user will be <strong>pre-approved</strong> and can log in immediately using their Email & Password.
+                </div>
+
+                <div className="flex items-center justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateModal(false)}
+                    className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600 hover:bg-gray-50"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={creating}
+                    className="px-5 py-2 rounded-xl bg-gradient-to-r from-plum-800 to-plum-950 text-white text-xs font-black shadow-md hover:from-plum-700 hover:to-plum-900 disabled:opacity-50 flex items-center gap-1.5"
+                  >
+                    {creating && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                    Create & Activate
+                  </button>
+                </div>
+              </form>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Reject Buyer Request Modal */}
+      <AnimatePresence>
+        {rejectingUser && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-plum-950/60 backdrop-blur-xs flex items-center justify-center p-4"
+            onClick={() => setRejectingUser(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.95, opacity: 0 }}
+              onClick={(e) => e.stopPropagation()}
+              className="w-full max-w-md bg-white rounded-3xl border border-red-100 shadow-2xl overflow-hidden p-6 space-y-4"
+            >
+              <div className="flex items-center justify-between">
+                <h3 className="font-serif font-bold text-base text-red-700">
+                  Reject Registration — {rejectingUser.name}
+                </h3>
+                <button
+                  onClick={() => setRejectingUser(null)}
+                  className="p-1 rounded-lg hover:bg-gray-100"
+                >
+                  <X className="w-4 h-4 text-gray-500" />
+                </button>
+              </div>
+              <p className="text-xs text-gray-500">
+                Optional reason shown if this user tries to log in:
+              </p>
+              <textarea
+                rows={3}
+                value={rejectReason}
+                onChange={(e) => setRejectReason(e.target.value)}
+                placeholder="e.g. Unverified details or duplicate account..."
+                className="w-full p-3 rounded-xl border border-red-200 text-xs focus:outline-none focus:ring-2 focus:ring-red-400"
+              />
+              <div className="flex justify-end gap-2">
+                <button
+                  onClick={() => setRejectingUser(null)}
+                  className="px-4 py-2 rounded-xl border border-gray-200 text-xs font-bold text-gray-600"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={() => handleApprovalAction(rejectingUser._id, "REJECT", rejectReason)}
+                  disabled={processingApprovalId === rejectingUser._id}
+                  className="px-4 py-2 rounded-xl bg-red-600 hover:bg-red-700 text-white text-xs font-black disabled:opacity-50"
+                >
+                  Confirm Rejection
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

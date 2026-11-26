@@ -24,6 +24,7 @@ import {
   X,
   Clock,
   FileText,
+  ShoppingBag,
 } from "lucide-react";
 
 export const getDealTypeBadge = (dealType?: string) => {
@@ -566,6 +567,18 @@ export default function DealCard({
                     Open Form
                   </a>
                 )}
+
+                {!isFull && deal.productLink && (
+                  <a
+                    href={deal.productLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="py-2 px-3 rounded-xl bg-gradient-to-r from-plum-800 to-plum-950 hover:from-plum-700 hover:to-plum-900 text-white text-xs font-bold transition-all flex items-center gap-1.5 shadow-sm"
+                  >
+                    <ShoppingBag className="w-3.5 h-3.5 text-gold-400" />
+                    Product Link →
+                  </a>
+                )}
               </div>
             )}
 
@@ -1029,6 +1042,18 @@ export default function DealCard({
                 </a>
               )}
             </div>
+
+            {!isFull && deal.productLink && (
+              <a
+                href={deal.productLink}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-2.5 px-3 rounded-xl bg-gradient-to-r from-plum-800 to-plum-950 hover:from-plum-700 hover:to-plum-900 text-white text-xs font-black transition-all flex items-center justify-center gap-1.5 shadow-sm"
+              >
+                <ShoppingBag className="w-3.5 h-3.5 text-gold-400" />
+                Product Link ({deal.marketplace || "Buy"}) →
+              </a>
+            )}
           </>
         )}
       </div>
