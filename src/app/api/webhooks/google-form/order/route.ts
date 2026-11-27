@@ -130,8 +130,11 @@ export async function POST(req: NextRequest) {
 
     // Check if order already exists (normalized)
     const existingOrder = await findOrderByNormalizedId(orderId);
-    if (existingOrder) {
-      return NextResponse.json({ message: "Order already registered", orderId: existingOrder._id }, { status: 200 });
+    if (existingOrder && existingOrder.status === OrderStatus.APPROVED_AND_PAID) {
+      return NextResponse.json(
+        { message: "Order already approved and paid; locked against overwrites.", orderId: existingOrder._id },
+        { status: 200 }
+      );
     }
 
     // =========================================================================
@@ -196,7 +199,31 @@ export async function POST(req: NextRequest) {
     let slotDeducted = false;
     let isOverbooked = false;
 
-    if (deal) {
+    const alreadyHoldsSameDealSlot =
+      Boolean(existingOrder) &&
+      existingOrder!.status !== OrderStatus.REJECTED &&
+      Boolean(existingOrder!.dealId) &&
+      Boolean(deal) &&
+      String(existingOrder!.dealId) === String(deal!._id);
+
+    // If resubmitted with a DIFFERENT deal, restore +1 slot on the previous deal
+    if (
+      existingOrder &&
+      existingOrder.dealId &&
+      existingOrder.status !== OrderStatus.REJECTED &&
+      (!deal || String(existingOrder.dealId) !== String(deal._id))
+    ) {
+      const prevDeal = await Deal.findById(existingOrder.dealId);
+      if (prevDeal) {
+        prevDeal.remainingReview = Math.min(prevDeal.reviewSlots, prevDeal.remainingReview + 1);
+        prevDeal.remainingSlots =
+          prevDeal.remainingReview + prevDeal.remainingRating + (prevDeal.remainingOrderOnly || 0);
+        if (prevDeal.remainingSlots > 0) prevDeal.isActive = true;
+        await prevDeal.save();
+      }
+    }
+
+    if (deal && !alreadyHoldsSameDealSlot) {
       // If deal is already completed (0 slots), strictly block overbooking
       if (deal.remainingSlots <= 0) {
         isOverbooked = true;
@@ -382,28 +409,61 @@ export async function POST(req: NextRequest) {
         : "REVIEW";
     const computedPayout = calculateDealPayout(deal, feedbackMode);
 
-    const newOrder = await Order.create({
-      marketplaceOrderId: orderId.trim(),
-      dealId: deal?._id,
-      productCode: deal?.productCode || (productCode ? productCode.toUpperCase() : "GENERAL"),
-      productName: deal?.productName || productNameInput || "Marketplace Product",
-      brandName: resolvedBrandName,
-      marketplace: deal?.marketplace || "Amazon",
-      amount: deal?.price || 0,
-      payoutAmount: computedPayout,
-      buyer: registeredBuyer?._id,
-      buyerName,
-      buyerPhone,
-      buyerEmail,
-      orderScreenshotUrl: screenshot,
-      mediator: mediatorUser?._id,
-      mediatorCode: resolvedMediatorCode,
-      status: orderStatus,
-      rejectionReason,
-      notes: isOverbooked ? "Order rejected because deal inventory was 0." : "",
-      orderDate: new Date(),
-      refundFormDeadline: deadline,
-    });
+    let savedOrder: any;
+    const isResubmission = Boolean(existingOrder);
+
+    if (existingOrder) {
+      existingOrder.dealId = deal?._id;
+      existingOrder.productCode = deal?.productCode || (productCode ? productCode.toUpperCase() : existingOrder.productCode || "GENERAL");
+      existingOrder.productName = deal?.productName || productNameInput || existingOrder.productName || "Marketplace Product";
+      existingOrder.brandName = resolvedBrandName;
+      existingOrder.marketplace = deal?.marketplace || existingOrder.marketplace || "Amazon";
+      existingOrder.amount = deal?.price || existingOrder.amount || 0;
+      existingOrder.payoutAmount = computedPayout;
+      if (registeredBuyer?._id) existingOrder.buyer = registeredBuyer._id;
+      existingOrder.buyerName = buyerName;
+      if (buyerPhone && buyerPhone !== "N/A") existingOrder.buyerPhone = buyerPhone;
+      if (buyerEmail) existingOrder.buyerEmail = buyerEmail;
+      if (screenshot) existingOrder.orderScreenshotUrl = screenshot;
+      if (mediatorUser?._id) existingOrder.mediator = mediatorUser._id;
+      if (resolvedMediatorCode) existingOrder.mediatorCode = resolvedMediatorCode;
+      if (isOverbooked) {
+        existingOrder.status = OrderStatus.REJECTED;
+        existingOrder.rejectionReason = rejectionReason;
+      } else if (existingOrder.status === OrderStatus.REJECTED) {
+        existingOrder.status = OrderStatus.ORDER_FILLED;
+        existingOrder.rejectionReason = "";
+      }
+      const stamp = new Date().toLocaleString("en-IN", { timeZone: "Asia/Kolkata" });
+      existingOrder.notes = existingOrder.notes
+        ? `${existingOrder.notes} | Resubmitted & updated via Order Form (${stamp})`
+        : `Resubmitted & updated via Order Form (${stamp})`;
+      await existingOrder.save();
+      savedOrder = existingOrder;
+    } else {
+      savedOrder = await Order.create({
+        marketplaceOrderId: orderId.trim(),
+        dealId: deal?._id,
+        productCode: deal?.productCode || (productCode ? productCode.toUpperCase() : "GENERAL"),
+        productName: deal?.productName || productNameInput || "Marketplace Product",
+        brandName: resolvedBrandName,
+        marketplace: deal?.marketplace || "Amazon",
+        amount: deal?.price || 0,
+        payoutAmount: computedPayout,
+        buyer: registeredBuyer?._id,
+        buyerName,
+        buyerPhone,
+        buyerEmail,
+        orderScreenshotUrl: screenshot,
+        mediator: mediatorUser?._id,
+        mediatorCode: resolvedMediatorCode,
+        status: orderStatus,
+        rejectionReason,
+        notes: isOverbooked ? "Order rejected because deal inventory was 0." : "",
+        orderDate: new Date(),
+        refundFormDeadline: deadline,
+      });
+    }
 
     // =========================================================================
     // 6. In-App Notifications
@@ -450,8 +510,10 @@ export async function POST(req: NextRequest) {
         await Notification.create({
           recipient: admin._id,
           recipientRole: "ADMIN",
-          title: "🛒 New Form Order Received",
-          message: `Order #${orderId} submitted for ${deal?.brandName || "Brand"}. Assigned to: ${mediatorCode || "Unassigned"}. Slots left: ${deal?.remainingSlots ?? "N/A"}.`,
+          title: isResubmission ? "🔄 Order Resubmitted & Updated" : "🛒 New Form Order Received",
+          message: isResubmission
+            ? `Order #${orderId} was resubmitted by ${buyerName} (${deal?.brandName || "Brand"}) and auto-updated in Master Orders.`
+            : `Order #${orderId} submitted for ${deal?.brandName || "Brand"}. Assigned to: ${mediatorCode || "Unassigned"}. Slots left: ${deal?.remainingSlots ?? "N/A"}.`,
           type: "ORDER_CREATED",
           link: `/admin/orders`,
         });
@@ -460,10 +522,13 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       success: !isOverbooked,
+      updated: isResubmission,
       message: isOverbooked
         ? "Slots for this deal were already full. Order registered as overbooked."
+        : isResubmission
+        ? "Existing order auto-updated with resubmitted Order Form details"
         : "Order received and synced into Lakshmi Agency database",
-      orderId: newOrder._id,
+      orderId: savedOrder._id,
       dealMatched: !!deal,
       dealProductCode: deal?.productCode,
       slotsRemaining: deal?.remainingSlots,
