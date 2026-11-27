@@ -521,7 +521,7 @@ export default function AdminOrdersPage() {
             pageSize={pageSize}
             onPageChange={setCurrentPage}
             onPageSizeChange={setPageSize}
-            pageSizeOptions={[10, 25, 50]}
+            pageSizeOptions={[10, 20, 40, 50, 100]}
           />
         )}
       </div>

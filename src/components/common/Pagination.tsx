@@ -19,7 +19,7 @@ export default function Pagination({
   pageSize,
   onPageChange,
   onPageSizeChange,
-  pageSizeOptions = [10, 25, 50],
+  pageSizeOptions = [10, 20, 40, 50, 100],
 }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(totalEntries / pageSize));
   const startEntry = totalEntries === 0 ? 0 : (currentPage - 1) * pageSize + 1;
@@ -53,7 +53,7 @@ export default function Pagination({
         </span>
 
         {onPageSizeChange && (
-          <div className="hidden sm:flex items-center gap-1.5 ml-2 pl-3 border-l border-plum-100">
+          <div className="flex items-center gap-1.5 ml-2 pl-3 border-l border-plum-100">
             <span className="text-[11px] text-gray-400">Rows per page:</span>
             <CustomDropdown
               value={String(pageSize)}
@@ -66,6 +66,8 @@ export default function Pagination({
                 label: String(opt),
               }))}
               className="w-20"
+              menuClassName="!min-w-[88px] w-24"
+              direction="up"
               size="sm"
             />
           </div>

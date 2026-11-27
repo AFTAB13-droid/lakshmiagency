@@ -833,7 +833,7 @@ export default function BuyerDealsPage() {
           pageSize={pageSize}
           onPageChange={setCurrentPage}
           onPageSizeChange={setPageSize}
-          pageSizeOptions={[12, 24, 48]}
+          pageSizeOptions={[10, 20, 40, 50, 100]}
         />
       )}
 

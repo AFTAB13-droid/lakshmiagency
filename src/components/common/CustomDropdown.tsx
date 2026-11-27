@@ -23,6 +23,7 @@ export interface CustomDropdownProps {
   searchable?: boolean;
   size?: "sm" | "md" | "lg";
   align?: "left" | "right";
+  direction?: "down" | "up";
   disabled?: boolean;
 }
 
@@ -37,6 +38,7 @@ export default function CustomDropdown({
   searchable = false,
   size = "md",
   align = "left",
+  direction = "down",
   disabled = false,
 }: CustomDropdownProps) {
   const [isOpen, setIsOpen] = useState(false);
@@ -161,11 +163,13 @@ export default function CustomDropdown({
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -4, scale: 0.97 }}
+            initial={{ opacity: 0, y: direction === "up" ? 4 : -4, scale: 0.97 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -4, scale: 0.97 }}
+            exit={{ opacity: 0, y: direction === "up" ? 4 : -4, scale: 0.97 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className={`absolute z-50 mt-1.5 min-w-[200px] w-full max-w-xs bg-white rounded-2xl border border-plum-100 shadow-xl overflow-hidden backdrop-blur-md p-1.5 ${
+            className={`absolute z-50 ${
+              direction === "up" ? "bottom-full mb-1.5" : "mt-1.5"
+            } min-w-[200px] w-full max-w-xs bg-white rounded-2xl border border-plum-100 shadow-xl overflow-hidden backdrop-blur-md p-1.5 ${
               align === "right" ? "right-0" : "left-0"
             } ${menuClassName}`}
           >
