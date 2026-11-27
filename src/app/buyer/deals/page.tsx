@@ -13,6 +13,7 @@ import {
   buildPrefilledOrderFormUrl,
   AnimatedInfoButton,
   DealInfoModal,
+  ProductImageLightbox,
 } from "@/components/deals/DealCard";
 import {
   Tag,
@@ -50,6 +51,7 @@ export default function BuyerDealsPage() {
   // Copied & Info Modal states
   const [copiedCode, setCopiedCode] = useState<string | null>(null);
   const [infoModalDeal, setInfoModalDeal] = useState<any | null>(null);
+  const [lightboxDeal, setLightboxDeal] = useState<any | null>(null);
 
   useEffect(() => {
     fetch("/api/deals")
@@ -345,6 +347,10 @@ export default function BuyerDealsPage() {
             const reviewRem = deal.remainingReview ?? 0;
             const reviewPercent = Math.min(100, Math.max(0, (reviewRem / reviewTotal) * 100));
 
+            const orderOnlyTotal = deal.orderOnlySlots || 0;
+            const orderOnlyRem = deal.remainingOrderOnly ?? 0;
+            const orderOnlyPercent = orderOnlyTotal > 0 ? Math.min(100, Math.max(0, (orderOnlyRem / orderOnlyTotal) * 100)) : 0;
+
             const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
             const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
             const adminPhone = rawAdminPhone.length === 10 ? "91" + rawAdminPhone : rawAdminPhone;
@@ -364,7 +370,11 @@ export default function BuyerDealsPage() {
               >
                 {/* Image & Badges */}
                 <div>
-                  <div className="relative aspect-[4/3] bg-gradient-to-br from-plum-50/50 to-white overflow-hidden p-4 border-b border-gray-100">
+                  <div
+                    onClick={() => setLightboxDeal(deal)}
+                    title="Click to view full image"
+                    className="relative aspect-[4/3] bg-gradient-to-br from-plum-50/50 to-white overflow-hidden p-4 border-b border-gray-100 cursor-zoom-in"
+                  >
                     <SafeImage
                       src={deal.productImage}
                       alt={deal.productName}
@@ -504,6 +514,29 @@ export default function BuyerDealsPage() {
                               )}
                             </span>
                           </div>
+
+                          {/* Order Only Slots */}
+                          {orderOnlyTotal > 0 && (
+                            <div className="p-2 rounded-xl bg-indigo-50/60 border border-indigo-200/70 col-span-2">
+                              <div className="flex justify-between items-center">
+                                <span className="font-bold text-indigo-950 flex items-center gap-1">
+                                  <ShoppingBag className="w-3 h-3 text-indigo-600" />
+                                  Order Only
+                                </span>
+                                <span className="font-mono font-black text-indigo-800">{orderOnlyRem}/{orderOnlyTotal}</span>
+                              </div>
+                              <div className="w-full h-1.5 bg-gray-200 rounded-full mt-1.5 overflow-hidden">
+                                <div className="h-full bg-gradient-to-r from-indigo-500 to-plum-600" style={{ width: `${orderOnlyPercent}%` }} />
+                              </div>
+                              <span className="text-[9px] text-indigo-800 font-bold mt-1 block truncate">
+                                {formatPricingLabel(
+                                  deal.orderOnlyPricingType || deal.pricingType,
+                                  deal.orderOnlyLessAmount ?? deal.lessAmount,
+                                  deal.orderOnlyCommissionAmount ?? deal.commissionAmount
+                                )}
+                              </span>
+                            </div>
+                          )}
                         </div>
                       </>
                     )}
@@ -609,6 +642,8 @@ export default function BuyerDealsPage() {
             const ratingRem = deal.remainingRating ?? 0;
             const reviewTotal = deal.reviewSlots || 1;
             const reviewRem = deal.remainingReview ?? 0;
+            const orderOnlyTotal = deal.orderOnlySlots || 0;
+            const orderOnlyRem = deal.remainingOrderOnly ?? 0;
 
             const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
             const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
@@ -627,7 +662,11 @@ export default function BuyerDealsPage() {
                 className="bg-white rounded-3xl border border-plum-100 p-4 sm:p-5 shadow-sm hover:shadow-xl transition-all flex flex-col md:flex-row items-start md:items-center justify-between gap-5 group"
               >
                 <div className="flex items-center gap-4 w-full md:w-auto">
-                  <div className="w-20 h-20 relative bg-plum-50/50 rounded-2xl overflow-hidden shrink-0 border border-plum-100">
+                  <div
+                    onClick={() => setLightboxDeal(deal)}
+                    title="Click to view full image"
+                    className="w-20 h-20 relative bg-plum-50/50 rounded-2xl overflow-hidden shrink-0 border border-plum-100 cursor-zoom-in hover:ring-2 hover:ring-plum-400 transition-all"
+                  >
                     <SafeImage src={deal.productImage} alt={deal.productName} fill className="object-contain p-2" />
                   </div>
                   <div>
@@ -691,6 +730,19 @@ export default function BuyerDealsPage() {
                         )}
                       </span>
                     </div>
+                    {orderOnlyTotal > 0 && (
+                      <div className="text-center p-2 rounded-xl bg-indigo-50/60 border border-indigo-200/70 w-28">
+                        <span className="text-[10px] text-indigo-700 block">Order Only</span>
+                        <strong className="text-indigo-900 font-mono block">{orderOnlyRem}/{orderOnlyTotal}</strong>
+                        <span className="text-[9px] text-indigo-800 font-bold block truncate">
+                          {formatPricingLabel(
+                            deal.orderOnlyPricingType || deal.pricingType,
+                            deal.orderOnlyLessAmount ?? deal.lessAmount,
+                            deal.orderOnlyCommissionAmount ?? deal.commissionAmount
+                          )}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -790,6 +842,15 @@ export default function BuyerDealsPage() {
         deal={infoModalDeal}
         isOpen={!!infoModalDeal}
         onClose={() => setInfoModalDeal(null)}
+      />
+
+      {/* Full-Size Product Image Lightbox */}
+      <ProductImageLightbox
+        src={lightboxDeal?.productImage}
+        alt={lightboxDeal?.productName || "Product"}
+        brandName={lightboxDeal?.brandName}
+        isOpen={!!lightboxDeal}
+        onClose={() => setLightboxDeal(null)}
       />
     </div>
   );

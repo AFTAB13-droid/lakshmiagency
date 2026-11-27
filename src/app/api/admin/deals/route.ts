@@ -40,11 +40,15 @@ export async function POST(req: NextRequest) {
       ratingPricingType,
       ratingLessAmount,
       ratingCommissionAmount,
+      orderOnlyPricingType,
+      orderOnlyLessAmount,
+      orderOnlyCommissionAmount,
       reviewDeletePricingType,
       reviewDeleteLessAmount,
       reviewDeleteCommissionAmount,
       reviewSlots,
       ratingSlots,
+      orderOnlySlots,
       dealType,
       description,
       instructions,
@@ -73,7 +77,8 @@ export async function POST(req: NextRequest) {
 
     const rSlots = isNoInvestment ? 9999 : (Number(reviewSlots) || 0);
     const ratSlots = isNoInvestment ? 9999 : (Number(ratingSlots) || 0);
-    const totalSlots = rSlots + ratSlots;
+    const ooSlots = isNoInvestment ? 0 : (Number(orderOnlySlots) || 0);
+    const totalSlots = rSlots + ratSlots + ooSlots;
 
     // Derive primary fallback pricingType from active feedback type if not explicitly provided
     const revPType = reviewPricingType || pricingType || "FULL_REFUND";
@@ -84,15 +89,21 @@ export async function POST(req: NextRequest) {
     const ratLess = Number(ratingLessAmount ?? lessAmount) || 0;
     const ratComm = Number(ratingCommissionAmount ?? commissionAmount) || 0;
 
+    const ooPType = orderOnlyPricingType || pricingType || "FULL_REFUND";
+    const ooLess = Number(orderOnlyLessAmount ?? lessAmount) || 0;
+    const ooComm = Number(orderOnlyCommissionAmount ?? commissionAmount) || 0;
+
     const primaryPType = isNoInvestment
       ? "FULL_REFUND"
       : rSlots > 0
       ? revPType
       : ratSlots > 0
       ? ratPType
+      : ooSlots > 0
+      ? ooPType
       : pricingType || "FULL_REFUND";
-    const primaryLess = isNoInvestment ? 0 : rSlots > 0 ? revLess : ratSlots > 0 ? ratLess : Number(lessAmount) || 0;
-    const primaryComm = isNoInvestment ? 0 : rSlots > 0 ? revComm : ratSlots > 0 ? ratComm : Number(commissionAmount) || 0;
+    const primaryLess = isNoInvestment ? 0 : rSlots > 0 ? revLess : ratSlots > 0 ? ratLess : ooSlots > 0 ? ooLess : Number(lessAmount) || 0;
+    const primaryComm = isNoInvestment ? 0 : rSlots > 0 ? revComm : ratSlots > 0 ? ratComm : ooSlots > 0 ? ooComm : Number(commissionAmount) || 0;
 
     const newDeal = await Deal.create({
       brandName: finalBrand,
@@ -111,6 +122,9 @@ export async function POST(req: NextRequest) {
       ratingPricingType: isNoInvestment ? "FULL_REFUND" : ratPType,
       ratingLessAmount: isNoInvestment ? 0 : ratLess,
       ratingCommissionAmount: isNoInvestment ? 0 : ratComm,
+      orderOnlyPricingType: isNoInvestment ? "FULL_REFUND" : ooPType,
+      orderOnlyLessAmount: isNoInvestment ? 0 : ooLess,
+      orderOnlyCommissionAmount: isNoInvestment ? 0 : ooComm,
       reviewDeletePricingType: isNoInvestment ? "NONE" : (reviewDeletePricingType || "NONE"),
       reviewDeleteLessAmount: isNoInvestment ? 0 : (Number(reviewDeleteLessAmount) || 0),
       reviewDeleteCommissionAmount: isNoInvestment ? 0 : (Number(reviewDeleteCommissionAmount) || 0),
@@ -120,6 +134,8 @@ export async function POST(req: NextRequest) {
       remainingReview: rSlots,
       ratingSlots: ratSlots,
       remainingRating: ratSlots,
+      orderOnlySlots: ooSlots,
+      remainingOrderOnly: ooSlots,
       dealType: dealType || "Original",
       description: description || "",
       instructions: instructions || "",
@@ -184,6 +200,9 @@ export async function PATCH(req: NextRequest) {
     if (updateData.ratingPricingType !== undefined) deal.ratingPricingType = updateData.ratingPricingType;
     if (updateData.ratingLessAmount !== undefined) deal.ratingLessAmount = Number(updateData.ratingLessAmount) || 0;
     if (updateData.ratingCommissionAmount !== undefined) deal.ratingCommissionAmount = Number(updateData.ratingCommissionAmount) || 0;
+    if (updateData.orderOnlyPricingType !== undefined) deal.orderOnlyPricingType = updateData.orderOnlyPricingType;
+    if (updateData.orderOnlyLessAmount !== undefined) deal.orderOnlyLessAmount = Number(updateData.orderOnlyLessAmount) || 0;
+    if (updateData.orderOnlyCommissionAmount !== undefined) deal.orderOnlyCommissionAmount = Number(updateData.orderOnlyCommissionAmount) || 0;
     if (updateData.reviewDeletePricingType !== undefined) deal.reviewDeletePricingType = updateData.reviewDeletePricingType;
     if (updateData.reviewDeleteLessAmount !== undefined) deal.reviewDeleteLessAmount = Number(updateData.reviewDeleteLessAmount) || 0;
     if (updateData.reviewDeleteCommissionAmount !== undefined) deal.reviewDeleteCommissionAmount = Number(updateData.reviewDeleteCommissionAmount) || 0;
@@ -199,12 +218,15 @@ export async function PATCH(req: NextRequest) {
     if (updateData.relist === true) {
       const newReview = updateData.reviewSlots !== undefined ? Number(updateData.reviewSlots) : 10;
       const newRating = updateData.ratingSlots !== undefined ? Number(updateData.ratingSlots) : 10;
+      const newOrderOnly = updateData.orderOnlySlots !== undefined ? Number(updateData.orderOnlySlots) : 0;
       deal.reviewSlots = newReview;
       deal.remainingReview = newReview;
       deal.ratingSlots = newRating;
       deal.remainingRating = newRating;
-      deal.totalSlots = newReview + newRating;
-      deal.remainingSlots = newReview + newRating;
+      deal.orderOnlySlots = newOrderOnly;
+      deal.remainingOrderOnly = newOrderOnly;
+      deal.totalSlots = newReview + newRating + newOrderOnly;
+      deal.remainingSlots = newReview + newRating + newOrderOnly;
       deal.isActive = deal.remainingSlots > 0;
     } else {
       // Direct slot overrides
@@ -214,14 +236,24 @@ export async function PATCH(req: NextRequest) {
       if (updateData.remainingRating !== undefined) {
         deal.remainingRating = Number(updateData.remainingRating);
       }
+      if (updateData.remainingOrderOnly !== undefined) {
+        deal.remainingOrderOnly = Number(updateData.remainingOrderOnly);
+      }
 
       // Slot adjustment based on total slot modifications
-      if (updateData.reviewSlots !== undefined || updateData.ratingSlots !== undefined) {
+      if (
+        updateData.reviewSlots !== undefined ||
+        updateData.ratingSlots !== undefined ||
+        updateData.orderOnlySlots !== undefined
+      ) {
         const newReview = updateData.reviewSlots !== undefined ? Number(updateData.reviewSlots) : deal.reviewSlots;
         const newRating = updateData.ratingSlots !== undefined ? Number(updateData.ratingSlots) : deal.ratingSlots;
+        const newOrderOnly =
+          updateData.orderOnlySlots !== undefined ? Number(updateData.orderOnlySlots) : deal.orderOnlySlots || 0;
 
         const usedReview = Math.max(0, deal.reviewSlots - deal.remainingReview);
         const usedRating = Math.max(0, deal.ratingSlots - deal.remainingRating);
+        const usedOrderOnly = Math.max(0, (deal.orderOnlySlots || 0) - (deal.remainingOrderOnly || 0));
 
         deal.reviewSlots = newReview;
         deal.remainingReview = Math.max(0, newReview - usedReview);
@@ -229,10 +261,17 @@ export async function PATCH(req: NextRequest) {
         deal.ratingSlots = newRating;
         deal.remainingRating = Math.max(0, newRating - usedRating);
 
-        deal.totalSlots = newReview + newRating;
-        deal.remainingSlots = deal.remainingReview + deal.remainingRating;
-      } else if (updateData.remainingReview !== undefined || updateData.remainingRating !== undefined) {
-        deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+        deal.orderOnlySlots = newOrderOnly;
+        deal.remainingOrderOnly = Math.max(0, newOrderOnly - usedOrderOnly);
+
+        deal.totalSlots = newReview + newRating + newOrderOnly;
+        deal.remainingSlots = deal.remainingReview + deal.remainingRating + deal.remainingOrderOnly;
+      } else if (
+        updateData.remainingReview !== undefined ||
+        updateData.remainingRating !== undefined ||
+        updateData.remainingOrderOnly !== undefined
+      ) {
+        deal.remainingSlots = deal.remainingReview + deal.remainingRating + (deal.remainingOrderOnly || 0);
       }
 
       if (deal.remainingSlots <= 0) {

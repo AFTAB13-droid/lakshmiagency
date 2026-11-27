@@ -65,7 +65,7 @@ export async function PATCH(req: NextRequest) {
         const deal = await Deal.findById(order.dealId);
         if (deal) {
           deal.remainingReview = Math.min(deal.reviewSlots, deal.remainingReview + 1);
-          deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+          deal.remainingSlots = deal.remainingReview + deal.remainingRating + (deal.remainingOrderOnly || 0);
           if (deal.remainingSlots > 0) {
             deal.isActive = true;
           }
@@ -117,8 +117,10 @@ export async function PATCH(req: NextRequest) {
             deal.remainingReview -= 1;
           } else if (deal.remainingRating > 0) {
             deal.remainingRating -= 1;
+          } else if ((deal.remainingOrderOnly || 0) > 0) {
+            deal.remainingOrderOnly -= 1;
           }
-          deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+          deal.remainingSlots = deal.remainingReview + deal.remainingRating + (deal.remainingOrderOnly || 0);
           if (deal.remainingSlots <= 0) {
             deal.isActive = false;
           }
@@ -173,7 +175,7 @@ export async function DELETE(req: NextRequest) {
         const deal = await Deal.findById(order.dealId);
         if (deal) {
           deal.remainingReview = Math.min(deal.reviewSlots, deal.remainingReview + 1);
-          deal.remainingSlots = deal.remainingReview + deal.remainingRating;
+          deal.remainingSlots = deal.remainingReview + deal.remainingRating + (deal.remainingOrderOnly || 0);
           if (deal.remainingSlots > 0) {
             deal.isActive = true;
           }

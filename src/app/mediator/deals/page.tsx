@@ -103,10 +103,14 @@ export default function MediatorDealsPage() {
       .replace(/{commission}/g, deal.commissionAmount || 0)
       .replace(/{remainingSlots}/g, deal.remainingSlots)
       .replace(/{orderFormUrl}/g, formUrl)
+      .replace(/{productLink}/g, deal.productLink || "")
       .replace(/{instructions}/g, deal.instructions || "")
       .replace(/{paymentTimeline}/g, deal.paymentTimeline || "");
 
     const extraLines: string[] = [];
+    if (deal.productLink?.trim() && !template.includes(deal.productLink.trim())) {
+      extraLines.push(`🔗 *Product Link:* ${deal.productLink.trim()}`);
+    }
     if (deal.instructions?.trim() && !template.includes(deal.instructions.trim())) {
       extraLines.push(`📋 *Instructions:* ${deal.instructions.trim()}`);
     }

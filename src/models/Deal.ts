@@ -27,6 +27,10 @@ export interface IDeal extends Document {
   ratingLessAmount?: number;
   ratingCommissionAmount?: number;
 
+  orderOnlyPricingType?: DealPricingType;
+  orderOnlyLessAmount?: number;
+  orderOnlyCommissionAmount?: number;
+
   // Review Delete / Error Pricing Policy
   reviewDeletePricingType?: "NONE" | DealPricingType;
   reviewDeleteLessAmount?: number;
@@ -41,6 +45,9 @@ export interface IDeal extends Document {
 
   ratingSlots: number;
   remainingRating: number;
+
+  orderOnlySlots: number;
+  remainingOrderOnly: number;
 
   feedbackSlots: number;
   remainingFeedback: number;
@@ -96,6 +103,14 @@ const DealSchema = new Schema<IDeal>(
     ratingLessAmount: { type: Number, default: 0 },
     ratingCommissionAmount: { type: Number, default: 0 },
 
+    orderOnlyPricingType: {
+      type: String,
+      enum: ["LESS", "FULL_REFUND", "COMMISSION"],
+      default: "FULL_REFUND",
+    },
+    orderOnlyLessAmount: { type: Number, default: 0 },
+    orderOnlyCommissionAmount: { type: Number, default: 0 },
+
     // Review Delete / Error Pricing Policy
     reviewDeletePricingType: {
       type: String,
@@ -114,6 +129,9 @@ const DealSchema = new Schema<IDeal>(
 
     ratingSlots: { type: Number, default: 0 },
     remainingRating: { type: Number, default: 0 },
+
+    orderOnlySlots: { type: Number, default: 0 },
+    remainingOrderOnly: { type: Number, default: 0 },
 
     feedbackSlots: { type: Number, default: 0 },
     remainingFeedback: { type: Number, default: 0 },

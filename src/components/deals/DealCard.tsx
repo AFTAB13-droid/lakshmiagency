@@ -105,6 +105,65 @@ export const AnimatedInfoButton = ({ onClick }: { onClick: () => void }) => (
   </motion.button>
 );
 
+export const ProductImageLightbox = ({
+  src,
+  alt,
+  brandName,
+  isOpen,
+  onClose,
+}: {
+  src?: string;
+  alt: string;
+  brandName?: string;
+  isOpen: boolean;
+  onClose: () => void;
+}) => {
+  if (!isOpen) return null;
+  return (
+    <AnimatePresence>
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md"
+        onClick={onClose}
+      >
+        <motion.div
+          initial={{ opacity: 0, scale: 0.9 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.9 }}
+          transition={{ type: "spring", stiffness: 320, damping: 26 }}
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-3xl bg-white rounded-3xl overflow-hidden shadow-2xl border border-white/20"
+        >
+          <div className="px-5 py-3.5 bg-gradient-to-r from-plum-950 to-plum-900 text-white flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="font-serif font-bold text-sm sm:text-base truncate">{alt}</p>
+              {brandName && (
+                <p className="text-[11px] text-gold-300 font-semibold uppercase tracking-wider">{brandName}</p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={onClose}
+              className="p-2 rounded-xl bg-white/10 hover:bg-white/20 text-white transition-colors shrink-0"
+              aria-label="Close image preview"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+          <div className="relative w-full h-[65vh] sm:h-[72vh] bg-gradient-to-br from-plum-50/40 via-white to-gold-50/30 p-4">
+            <SafeImage
+              src={src || ""}
+              alt={alt}
+              fill
+              className="object-contain p-4"
+              fallbackText={brandName}
+            />
+          </div>
+        </motion.div>
+      </div>
+    </AnimatePresence>
+  );
+};
+
 export const DealInfoModal = ({
   deal,
   isOpen,
@@ -115,6 +174,29 @@ export const DealInfoModal = ({
   onClose: () => void;
 }) => {
   if (!isOpen || !deal) return null;
+  const steps = [
+    {
+      num: "1",
+      title: "Open Product Link & Place Order",
+      desc: `Click "Product Link" to open the product on ${deal.marketplace || "the marketplace"}. Check price (₹${deal.price}) and place your order cleanly using a valid account.`,
+    },
+    {
+      num: "2",
+      title: "Fill Order Form Immediately",
+      desc: "Copy your Order ID & order screenshot, then click 'Open Form' / 'Order Form' and submit your details right away so your slot is locked.",
+    },
+    {
+      num: "3",
+      title: "Complete Review / Rating / Order Task",
+      desc: "After delivery, complete the required feedback (Review with pics/text, Rating, or Order Only as per your slot) following the Deal Instructions below.",
+    },
+    {
+      num: "4",
+      title: "Submit Refund Form & Receive Payout",
+      desc: "Once your review/rating goes live (or delivery completes for Order Only), submit the Refund Form. Payout will be credited per the Payment Timeline below.",
+    },
+  ];
+
   return (
     <AnimatePresence>
       <div
@@ -127,19 +209,19 @@ export const DealInfoModal = ({
           exit={{ opacity: 0, scale: 0.92, y: 12 }}
           transition={{ type: "spring", stiffness: 360, damping: 28 }}
           onClick={(e) => e.stopPropagation()}
-          className="w-full max-w-md bg-white rounded-3xl shadow-2xl border border-indigo-200 overflow-hidden"
+          className="w-full max-w-2xl max-h-[90vh] flex flex-col bg-white rounded-3xl shadow-2xl border border-indigo-200 overflow-hidden"
         >
-          <div className="p-5 bg-gradient-to-r from-plum-900 via-indigo-900 to-lotus-900 text-white flex items-center justify-between">
+          <div className="p-5 bg-gradient-to-r from-plum-900 via-indigo-900 to-lotus-900 text-white flex items-center justify-between shrink-0">
             <div className="flex items-center gap-2.5">
-              <div className="w-9 h-9 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
+              <div className="w-10 h-10 rounded-xl bg-white/15 flex items-center justify-center border border-white/20">
                 <Info className="w-5 h-5 text-gold-300" />
               </div>
               <div>
-                <h3 className="font-serif font-bold text-sm sm:text-base leading-tight line-clamp-1">
+                <h3 className="font-serif font-bold text-base sm:text-lg leading-tight line-clamp-1">
                   {deal.productName}
                 </h3>
-                <p className="text-[10px] text-white/75 font-mono">
-                  #{deal.productCode} • {deal.brandName}
+                <p className="text-[11px] text-white/75 font-mono">
+                  #{deal.productCode} • {deal.brandName} • {deal.marketplace}
                 </p>
               </div>
             </div>
@@ -152,35 +234,61 @@ export const DealInfoModal = ({
             </button>
           </div>
 
-          <div className="p-5 space-y-4 text-xs">
-            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1.5">
-              <div className="flex items-center gap-1.5 font-black text-indigo-950 uppercase tracking-wider text-[11px]">
-                <FileText className="w-4 h-4 text-indigo-600" />
-                Deal Instructions &amp; Review Policy
-              </div>
-              <p className="text-indigo-950/90 leading-relaxed whitespace-pre-line font-medium">
-                {deal.instructions?.trim() ||
-                  "Follow standard marketplace review guidelines, keep the review live, and submit your Refund Form within the deadline."}
-              </p>
-            </div>
-
+          <div className="p-5 sm:p-6 space-y-4 text-xs overflow-y-auto">
+            {/* Payment Timeline */}
             <div className="p-4 rounded-2xl bg-amber-50/80 border border-amber-200 space-y-1.5">
               <div className="flex items-center gap-1.5 font-black text-amber-950 uppercase tracking-wider text-[11px]">
                 <Clock className="w-4 h-4 text-amber-600" />
                 Payment Timeline &amp; Details
               </div>
-              <p className="text-amber-950/90 leading-relaxed whitespace-pre-line font-bold">
+              <p className="text-amber-950/90 leading-relaxed whitespace-pre-line font-bold text-xs sm:text-sm">
                 {deal.paymentTimeline?.trim() ||
                   "20–25 working days after review goes live and Refund Form is submitted."}
               </p>
             </div>
+
+            {/* Deal Instructions */}
+            <div className="p-4 rounded-2xl bg-indigo-50/70 border border-indigo-200 space-y-1.5">
+              <div className="flex items-center gap-1.5 font-black text-indigo-950 uppercase tracking-wider text-[11px]">
+                <FileText className="w-4 h-4 text-indigo-600" />
+                Deal Instructions &amp; Review Policy
+              </div>
+              <p className="text-indigo-950/90 leading-relaxed whitespace-pre-line font-medium text-xs sm:text-sm">
+                {deal.instructions?.trim() ||
+                  "Follow standard marketplace review guidelines, keep the review live, and submit your Refund Form within the deadline."}
+              </p>
+            </div>
+
+            {/* Step-by-Step Guide */}
+            <div className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3">
+              <div className="flex items-center gap-1.5 font-black text-emerald-950 uppercase tracking-wider text-[11px]">
+                <Sparkles className="w-4 h-4 text-emerald-600" />
+                Step-by-Step Deal Guide
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                {steps.map((s) => (
+                  <div
+                    key={s.num}
+                    className="p-3 rounded-xl bg-white border border-emerald-100 shadow-2xs flex items-start gap-2.5"
+                  >
+                    <span className="w-6 h-6 rounded-full bg-emerald-600 text-white font-black text-[11px] flex items-center justify-center shrink-0">
+                      {s.num}
+                    </span>
+                    <div>
+                      <div className="font-bold text-plum-950 text-xs">{s.title}</div>
+                      <p className="text-[11px] text-gray-600 leading-relaxed mt-0.5">{s.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          <div className="p-4 pt-0 flex justify-end">
+          <div className="p-4 pt-3 border-t border-gray-100 flex justify-end shrink-0 bg-gray-50/50">
             <button
               type="button"
               onClick={onClose}
-              className="px-5 py-2.5 rounded-xl plum-gradient-bg text-white font-bold text-xs shadow-sm hover:opacity-95"
+              className="px-6 py-2.5 rounded-xl plum-gradient-bg text-white font-bold text-xs shadow-sm hover:opacity-95"
             >
               Got It
             </button>
@@ -226,6 +334,7 @@ export default function DealCard({
 }: DealCardProps) {
   const [copiedLink, setCopiedLink] = useState(false);
   const [showInfoModal, setShowInfoModal] = useState(false);
+  const [showImageModal, setShowImageModal] = useState(false);
   const isFull = (deal.remainingSlots ?? 0) <= 0;
 
   // Build prefilled Google Form URL using real Entry IDs when configured
@@ -283,6 +392,10 @@ export default function DealCard({
   const reviewRem = deal.remainingReview ?? 0;
   const reviewPercent = Math.min(100, Math.max(0, (reviewRem / reviewTotal) * 100));
 
+  const orderOnlyTotal = deal.orderOnlySlots || 0;
+  const orderOnlyRem = deal.remainingOrderOnly ?? 0;
+  const orderOnlyPercent = orderOnlyTotal > 0 ? Math.min(100, Math.max(0, (orderOnlyRem / orderOnlyTotal) * 100)) : 0;
+
   const isNoInvestment = deal.dealType === "No Investment" || deal.dealType === "No Investment Deal";
   const rawAdminPhone = (deal.whatsappNumber || "9876543210").replace(/\D/g, "");
   const adminPhone = rawAdminPhone.length === 10 ? "91" + rawAdminPhone : rawAdminPhone;
@@ -311,8 +424,12 @@ export default function DealCard({
         {/* Top Ambient Gold Highlight Bar on Hover */}
         <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-plum-600 via-lotus-500 to-gold-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
-        {/* Product Image on Left */}
-        <div className="relative w-full md:w-72 lg:w-80 h-56 md:h-auto min-h-[220px] bg-gradient-to-br from-plum-50 via-lotus-50/40 to-gold-50/30 overflow-hidden shrink-0 border-b md:border-b-0 md:border-r border-plum-100/60">
+        {/* Product Image on Left (Clickable to zoom) */}
+        <div
+          onClick={() => setShowImageModal(true)}
+          title="Click to view full image"
+          className="relative w-full md:w-72 lg:w-80 h-56 md:h-auto min-h-[220px] bg-gradient-to-br from-plum-50 via-lotus-50/40 to-gold-50/30 overflow-hidden shrink-0 border-b md:border-b-0 md:border-r border-plum-100/60 cursor-zoom-in"
+        >
           <SafeImage
             src={deal.productImage}
             alt={deal.productName}
@@ -502,6 +619,36 @@ export default function DealCard({
                   )}
                 </span>
               </div>
+
+              {/* Order Only Slot Meter (when configured) */}
+              {orderOnlyTotal > 0 && (
+                <div className="p-3.5 rounded-2xl bg-indigo-50/60 border border-indigo-200/70 sm:col-span-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-indigo-950 flex items-center gap-1.5">
+                      <ShoppingBag className="w-3.5 h-3.5 text-indigo-600" />
+                      Order Only Slots
+                    </span>
+                    <span className="text-xs font-mono font-black text-indigo-800">
+                      {orderOnlyRem} / {orderOnlyTotal}
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                    <motion.div
+                      initial={{ width: 0 }}
+                      animate={{ width: `${orderOnlyPercent}%` }}
+                      transition={{ duration: 0.6, ease: "easeOut" }}
+                      className="h-full bg-gradient-to-r from-indigo-500 to-plum-600 rounded-full"
+                    />
+                  </div>
+                  <span className="text-[10px] text-indigo-800 font-bold mt-1.5 block">
+                    {formatPricingLabel(
+                      deal.orderOnlyPricingType || deal.pricingType,
+                      deal.orderOnlyLessAmount ?? deal.lessAmount,
+                      deal.orderOnlyCommissionAmount ?? deal.commissionAmount
+                    )}
+                  </span>
+                </div>
+              )}
             </div>
           )}
 
@@ -659,6 +806,13 @@ export default function DealCard({
         </div>
       </motion.div>
       <DealInfoModal deal={deal} isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} />
+      <ProductImageLightbox
+        src={deal.productImage}
+        alt={deal.productName}
+        brandName={deal.brandName}
+        isOpen={showImageModal}
+        onClose={() => setShowImageModal(false)}
+      />
       </>
     );
   }
@@ -683,8 +837,12 @@ export default function DealCard({
       <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-plum-600 via-lotus-500 to-gold-400 opacity-0 group-hover:opacity-100 transition-opacity duration-300 z-10" />
 
       <div>
-        {/* Big Product Image Section */}
-        <div className="relative h-52 w-full bg-gradient-to-br from-plum-50 via-lotus-50/40 to-gold-50/30 overflow-hidden border-b border-plum-100/60">
+        {/* Big Product Image Section (Clickable to zoom) */}
+        <div
+          onClick={() => setShowImageModal(true)}
+          title="Click to view full image"
+          className="relative h-52 w-full bg-gradient-to-br from-plum-50 via-lotus-50/40 to-gold-50/30 overflow-hidden border-b border-plum-100/60 cursor-zoom-in"
+        >
           <SafeImage
             src={deal.productImage}
             alt={deal.productName}
@@ -885,6 +1043,36 @@ export default function DealCard({
                     )}
                   </span>
                 </div>
+
+                {/* Order Only Slot Meter (when configured) */}
+                {orderOnlyTotal > 0 && (
+                  <div className="p-3 rounded-2xl bg-indigo-50/60 border border-indigo-200/70 col-span-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[11px] font-bold text-indigo-950 flex items-center gap-1">
+                        <ShoppingBag className="w-3 h-3 text-indigo-600" />
+                        Order Only
+                      </span>
+                      <span className="text-[10px] font-mono font-black text-indigo-800">
+                        {orderOnlyRem}/{orderOnlyTotal}
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-gray-200/80 rounded-full mt-2 overflow-hidden">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${orderOnlyPercent}%` }}
+                        transition={{ duration: 0.6, ease: "easeOut" }}
+                        className="h-full bg-gradient-to-r from-indigo-500 to-plum-600 rounded-full"
+                      />
+                    </div>
+                    <span className="text-[10px] text-indigo-800 font-bold mt-1.5 block truncate">
+                      {formatPricingLabel(
+                        deal.orderOnlyPricingType || deal.pricingType,
+                        deal.orderOnlyLessAmount ?? deal.lessAmount,
+                        deal.orderOnlyCommissionAmount ?? deal.commissionAmount
+                      )}
+                    </span>
+                  </div>
+                )}
               </div>
 
             </>
@@ -1059,6 +1247,13 @@ export default function DealCard({
       </div>
     </motion.div>
     <DealInfoModal deal={deal} isOpen={showInfoModal} onClose={() => setShowInfoModal(false)} />
+    <ProductImageLightbox
+      src={deal.productImage}
+      alt={deal.productName}
+      brandName={deal.brandName}
+      isOpen={showImageModal}
+      onClose={() => setShowImageModal(false)}
+    />
     </>
   );
 }

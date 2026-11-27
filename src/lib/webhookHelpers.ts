@@ -98,23 +98,39 @@ export async function findOrderByNormalizedId(rawOrderId: string) {
 /**
  * Computes expected payout amount from Deal's per-feedback-type pricing.
  */
-export function calculateDealPayout(deal: any, isRatingSlot: boolean): number {
+export function calculateDealPayout(deal: any, feedbackTypeOrIsRating: boolean | "REVIEW" | "RATING" | "ORDER_ONLY"): number {
   if (!deal) return 0;
   const price = Number(deal.price) || 0;
-  const pType = isRatingSlot
-    ? deal.ratingPricingType || deal.pricingType
-    : deal.reviewPricingType || deal.pricingType;
+  const mode =
+    typeof feedbackTypeOrIsRating === "boolean"
+      ? feedbackTypeOrIsRating
+        ? "RATING"
+        : "REVIEW"
+      : feedbackTypeOrIsRating;
+
+  const pType =
+    mode === "RATING"
+      ? deal.ratingPricingType || deal.pricingType
+      : mode === "ORDER_ONLY"
+      ? deal.orderOnlyPricingType || deal.pricingType
+      : deal.reviewPricingType || deal.pricingType;
 
   if (pType === "LESS") {
-    const less = isRatingSlot
-      ? Number(deal.ratingLessAmount ?? deal.lessAmount) || 0
-      : Number(deal.reviewLessAmount ?? deal.lessAmount) || 0;
+    const less =
+      mode === "RATING"
+        ? Number(deal.ratingLessAmount ?? deal.lessAmount) || 0
+        : mode === "ORDER_ONLY"
+        ? Number(deal.orderOnlyLessAmount ?? deal.lessAmount) || 0
+        : Number(deal.reviewLessAmount ?? deal.lessAmount) || 0;
     return Math.max(0, price - less);
   }
   if (pType === "COMMISSION") {
-    const comm = isRatingSlot
-      ? Number(deal.ratingCommissionAmount ?? deal.commissionAmount) || 0
-      : Number(deal.reviewCommissionAmount ?? deal.commissionAmount) || 0;
+    const comm =
+      mode === "RATING"
+        ? Number(deal.ratingCommissionAmount ?? deal.commissionAmount) || 0
+        : mode === "ORDER_ONLY"
+        ? Number(deal.orderOnlyCommissionAmount ?? deal.commissionAmount) || 0
+        : Number(deal.reviewCommissionAmount ?? deal.commissionAmount) || 0;
     return price + comm;
   }
   return price;

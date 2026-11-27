@@ -60,10 +60,14 @@ export default function AdminDealsPage() {
     ratingPricingType: "LESS",
     ratingLessAmount: "",
     ratingCommissionAmount: "",
+    orderOnlyPricingType: "LESS",
+    orderOnlyLessAmount: "",
+    orderOnlyCommissionAmount: "",
     instructions: "",
     paymentTimeline: "",
     reviewSlots: "10",
     ratingSlots: "10",
+    orderOnlySlots: "0",
     dealType: "Original",
     description: "",
     whatsappNumber: "",
@@ -88,10 +92,14 @@ export default function AdminDealsPage() {
       ratingPricingType: "LESS",
       ratingLessAmount: "",
       ratingCommissionAmount: "",
+      orderOnlyPricingType: "LESS",
+      orderOnlyLessAmount: "",
+      orderOnlyCommissionAmount: "",
       instructions: "",
       paymentTimeline: "",
       reviewSlots: "10",
       ratingSlots: "10",
+      orderOnlySlots: "0",
       dealType: "Original",
       description: "",
       whatsappNumber: "",
@@ -126,10 +134,14 @@ export default function AdminDealsPage() {
       ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
       ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
       ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      orderOnlyPricingType: deal.orderOnlyPricingType || deal.pricingType || "LESS",
+      orderOnlyLessAmount: deal.orderOnlyLessAmount !== undefined ? String(deal.orderOnlyLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      orderOnlyCommissionAmount: deal.orderOnlyCommissionAmount !== undefined ? String(deal.orderOnlyCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
       instructions: deal.instructions || "",
       paymentTimeline: deal.paymentTimeline || "",
       reviewSlots: deal.reviewSlots !== undefined ? String(deal.reviewSlots) : "10",
       ratingSlots: deal.ratingSlots !== undefined ? String(deal.ratingSlots) : "10",
+      orderOnlySlots: deal.orderOnlySlots !== undefined ? String(deal.orderOnlySlots) : "0",
       dealType: deal.dealType || "Original",
       description: deal.description || "",
       whatsappNumber: deal.whatsappNumber || "",
@@ -158,10 +170,14 @@ export default function AdminDealsPage() {
       ratingPricingType: deal.ratingPricingType || deal.pricingType || "LESS",
       ratingLessAmount: deal.ratingLessAmount !== undefined ? String(deal.ratingLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
       ratingCommissionAmount: deal.ratingCommissionAmount !== undefined ? String(deal.ratingCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
+      orderOnlyPricingType: deal.orderOnlyPricingType || deal.pricingType || "LESS",
+      orderOnlyLessAmount: deal.orderOnlyLessAmount !== undefined ? String(deal.orderOnlyLessAmount) : (deal.lessAmount !== undefined ? String(deal.lessAmount) : ""),
+      orderOnlyCommissionAmount: deal.orderOnlyCommissionAmount !== undefined ? String(deal.orderOnlyCommissionAmount) : (deal.commissionAmount !== undefined ? String(deal.commissionAmount) : ""),
       instructions: deal.instructions || "",
       paymentTimeline: deal.paymentTimeline || "",
       reviewSlots: "10",
       ratingSlots: "10",
+      orderOnlySlots: "0",
       dealType: deal.dealType || "Original",
       description: deal.description || "",
       whatsappNumber: deal.whatsappNumber || "",
@@ -284,12 +300,14 @@ export default function AdminDealsPage() {
         preparedData.commissionAmount = "0";
         preparedData.reviewSlots = "9999";
         preparedData.ratingSlots = "9999";
+        preparedData.orderOnlySlots = "0";
         if (!preparedData.productImage) {
           preparedData.productImage = "/logo.jpg";
         }
       } else {
         const revS = Number(formData.reviewSlots) || 0;
         const ratS = Number(formData.ratingSlots) || 0;
+        const ooS = Number(formData.orderOnlySlots) || 0;
         if (revS > 0) {
           preparedData.pricingType = formData.reviewPricingType;
           preparedData.lessAmount = formData.reviewLessAmount || "0";
@@ -298,6 +316,10 @@ export default function AdminDealsPage() {
           preparedData.pricingType = formData.ratingPricingType;
           preparedData.lessAmount = formData.ratingLessAmount || "0";
           preparedData.commissionAmount = formData.ratingCommissionAmount || "0";
+        } else if (ooS > 0) {
+          preparedData.pricingType = formData.orderOnlyPricingType;
+          preparedData.lessAmount = formData.orderOnlyLessAmount || "0";
+          preparedData.commissionAmount = formData.orderOnlyCommissionAmount || "0";
         }
       }
 
@@ -625,7 +647,18 @@ export default function AdminDealsPage() {
                         )}
                       </td>
                       <td className="p-4 sm:p-5 font-black text-plum-950 text-xs">
-                        {deal.dealType === "No Investment" ? "Direct" : `${deal.remainingSlots} / ${deal.totalSlots}`}
+                        {deal.dealType === "No Investment" ? (
+                          "Direct"
+                        ) : (
+                          <div className="space-y-1">
+                            <div>{deal.remainingSlots} / {deal.totalSlots}</div>
+                            {(deal.orderOnlySlots || 0) > 0 && (
+                              <div className="text-[10px] font-bold text-indigo-700 bg-indigo-50 border border-indigo-200 px-1.5 py-0.5 rounded-md inline-block">
+                                Order Only: {deal.remainingOrderOnly ?? 0}/{deal.orderOnlySlots}
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </td>
                       <td className="p-4 sm:p-5">
                         {deal.isActive === false && !isCompleted ? (
@@ -1021,10 +1054,10 @@ export default function AdminDealsPage() {
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-bold text-plum-900 block">Price &amp; Granular Feedback Slots (Stock)</span>
                   <span className="text-[11px] font-bold text-gold-700">
-                    Total Stock: {(Number(formData.reviewSlots) || 0) + (Number(formData.ratingSlots) || 0)} Units
+                    Total Stock: {(Number(formData.reviewSlots) || 0) + (Number(formData.ratingSlots) || 0) + (Number(formData.orderOnlySlots) || 0)} Units
                   </span>
                 </div>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   <div>
                     <label className="block text-xs font-semibold text-plum-900 mb-1">Marketplace Price (₹) *</label>
                     <input
@@ -1056,6 +1089,17 @@ export default function AdminDealsPage() {
                       onChange={(e) => setFormData({ ...formData, ratingSlots: e.target.value })}
                       required
                       className="w-full px-3 py-2 rounded-xl border border-gold-200 bg-white text-xs font-bold text-plum-900 focus:outline-none focus:ring-2 focus:ring-plum-400"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-indigo-900 mb-1">Order Only Slots</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={formData.orderOnlySlots}
+                      onChange={(e) => setFormData({ ...formData, orderOnlySlots: e.target.value })}
+                      required
+                      className="w-full px-3 py-2 rounded-xl border border-indigo-200 bg-white text-xs font-bold text-indigo-900 focus:outline-none focus:ring-2 focus:ring-indigo-400"
                     />
                   </div>
                 </div>
@@ -1169,6 +1213,63 @@ export default function AdminDealsPage() {
                         placeholder="e.g. 30"
                         required
                         className="w-full px-3 py-2 rounded-xl border border-amber-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-amber-400 font-bold text-emerald-700"
+                      />
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {/* Per-Feedback-Type Pricing: Order Only Slots Pricing */}
+              {Number(formData.orderOnlySlots) > 0 && (
+                <div className="p-4 rounded-2xl bg-indigo-50/50 border border-indigo-200/80 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-black text-indigo-950 flex items-center gap-1.5">
+                      📦 Order Only Deal Pricing <span className="text-[10px] font-bold text-indigo-800 bg-indigo-100 px-2 py-0.5 rounded-full">({formData.orderOnlySlots} Order Only Slots)</span>
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-3 gap-2">
+                    {[
+                      { id: "LESS", label: "Less Deal" },
+                      { id: "FULL_REFUND", label: "Full Refund" },
+                      { id: "COMMISSION", label: "Commission Deal" },
+                    ].map((p) => (
+                      <button
+                        key={p.id}
+                        type="button"
+                        onClick={() => setFormData({ ...formData, orderOnlyPricingType: p.id })}
+                        className={`py-2 px-2 rounded-xl text-xs font-bold transition-all ${
+                          formData.orderOnlyPricingType === p.id
+                            ? "bg-gradient-to-r from-indigo-600 to-plum-700 text-white shadow-sm"
+                            : "bg-white text-gray-600 border border-indigo-200 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {p.label}
+                      </button>
+                    ))}
+                  </div>
+                  {formData.orderOnlyPricingType === "LESS" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-indigo-950 mb-1">Order Only Less / Deduction Amount (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.orderOnlyLessAmount}
+                        onChange={(e) => setFormData({ ...formData, orderOnlyLessAmount: e.target.value })}
+                        placeholder="e.g. 50"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-indigo-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-amber-700"
+                      />
+                    </div>
+                  )}
+                  {formData.orderOnlyPricingType === "COMMISSION" && (
+                    <div>
+                      <label className="block text-xs font-semibold text-indigo-950 mb-1">Order Only Commission Payout (₹) *</label>
+                      <input
+                        type="number"
+                        value={formData.orderOnlyCommissionAmount}
+                        onChange={(e) => setFormData({ ...formData, orderOnlyCommissionAmount: e.target.value })}
+                        placeholder="e.g. 30"
+                        required
+                        className="w-full px-3 py-2 rounded-xl border border-indigo-200 text-xs bg-white focus:outline-none focus:ring-2 focus:ring-indigo-400 font-bold text-emerald-700"
                       />
                     </div>
                   )}

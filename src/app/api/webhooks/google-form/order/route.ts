@@ -201,10 +201,18 @@ export async function POST(req: NextRequest) {
       if (deal.remainingSlots <= 0) {
         isOverbooked = true;
       } else {
-        // Determine whether to deduct Review bucket or Rating bucket
-        const isRatingExplicit = slotTypeInput && slotTypeInput.toLowerCase().includes("rating");
-        const preferBucket = isRatingExplicit ? "remainingRating" : "remainingReview";
-        const fallbackBucket = preferBucket === "remainingReview" ? "remainingRating" : "remainingReview";
+        // Determine whether to deduct Review, Rating, or Order Only bucket
+        const normalizedSlot = (slotTypeInput || "").toLowerCase();
+        const isRatingExplicit = normalizedSlot.includes("rating");
+        const isOrderOnlyExplicit = normalizedSlot.includes("order only") || normalizedSlot.includes("order_only") || normalizedSlot === "order";
+        const preferBucket = isOrderOnlyExplicit
+          ? "remainingOrderOnly"
+          : isRatingExplicit
+          ? "remainingRating"
+          : "remainingReview";
+        const fallbackBuckets = ["remainingReview", "remainingRating", "remainingOrderOnly"].filter(
+          (b) => b !== preferBucket
+        );
 
         // ATOMIC LOCK & DECREMENT:
         // MongoDB conditional findOneAndUpdate ensures two users submitting at the exact same
@@ -224,8 +232,9 @@ export async function POST(req: NextRequest) {
           { new: true }
         );
 
-        // Fallback to alternate bucket if preferred bucket was 0
-        if (!updatedDeal) {
+        // Fallback to alternate buckets if preferred bucket was 0
+        for (const fallbackBucket of fallbackBuckets) {
+          if (updatedDeal) break;
           updatedDeal = await Deal.findOneAndUpdate(
             {
               _id: deal._id,
@@ -364,8 +373,14 @@ export async function POST(req: NextRequest) {
       ? "OVERBOOKED: All available review slots for this deal were completed prior to submission."
       : "";
 
-    const isRatingSlot = Boolean(slotTypeInput && slotTypeInput.toLowerCase().includes("rating"));
-    const computedPayout = calculateDealPayout(deal, isRatingSlot);
+    const normalizedSlotInput = (slotTypeInput || "").toLowerCase();
+    const feedbackMode: "REVIEW" | "RATING" | "ORDER_ONLY" =
+      normalizedSlotInput.includes("order only") || normalizedSlotInput.includes("order_only") || normalizedSlotInput === "order"
+        ? "ORDER_ONLY"
+        : normalizedSlotInput.includes("rating")
+        ? "RATING"
+        : "REVIEW";
+    const computedPayout = calculateDealPayout(deal, feedbackMode);
 
     const newOrder = await Order.create({
       marketplaceOrderId: orderId.trim(),

@@ -364,6 +364,7 @@ export default function AdminStocksHubPage() {
                           <th className="py-3 px-5">Product &amp; Code</th>
                           <th className="py-3 px-4 text-center">Review Stock (Add / Rem / Sold)</th>
                           <th className="py-3 px-4 text-center">Rating Stock (Add / Rem / Sold)</th>
+                          <th className="py-3 px-4 text-center">Order Only (Add / Rem / Sold)</th>
                           <th className="py-3 px-4 text-center">Total (Add / Rem / Sold)</th>
                           <th className="py-3 px-4 text-center">Status</th>
                           <th className="py-3 px-5 text-right">Quick Action</th>
@@ -378,6 +379,10 @@ export default function AdminStocksHubPage() {
                           const ratAdd = d.ratingSlots ?? 0;
                           const ratRem = Math.max(0, d.remainingRating ?? 0);
                           const ratSold = Math.max(0, ratAdd - ratRem);
+
+                          const ooAdd = d.orderOnlySlots ?? 0;
+                          const ooRem = Math.max(0, d.remainingOrderOnly ?? 0);
+                          const ooSold = Math.max(0, ooAdd - ooRem);
 
                           const totAdd = d.totalSlots ?? 0;
                           const totRem = Math.max(0, d.remainingSlots ?? 0);
@@ -432,6 +437,16 @@ export default function AdminStocksHubPage() {
                                   <span className="font-black text-emerald-700">{ratRem}</span>
                                   <span className="text-gray-300">/</span>
                                   <span className="font-bold text-amber-700">{ratSold}</span>
+                                </div>
+                              </td>
+
+                              <td className="py-3.5 px-4 text-center font-mono">
+                                <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-xl bg-indigo-50/70 border border-indigo-100">
+                                  <span className="font-bold text-gray-700">{ooAdd}</span>
+                                  <span className="text-gray-300">/</span>
+                                  <span className="font-black text-emerald-700">{ooRem}</span>
+                                  <span className="text-gray-300">/</span>
+                                  <span className="font-bold text-amber-700">{ooSold}</span>
                                 </div>
                               </td>
 
